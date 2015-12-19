@@ -1,16 +1,10 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<sys/socket.h>
-#include<unistd.h>
-#include<string.h>
-
-#include"common.h"
+#include"server.h"
 
 #define BACKLOG 50
 #define PRINT(x)                                \
   printf("Server : %s\n", x)
 
-int main(int argc, char **argv){
+void connexion_accept(){
   int sfd, cfd;
   struct sockaddr_in my_addr, peer_addr;
   socklen_t peer_addr_size;
@@ -44,9 +38,7 @@ int main(int argc, char **argv){
   
   PRINT("Client connected");
 
-  /* send(cfd, "pouet", strlen("pouet"), 0); */
-  
-  close(sfd);
+    close(sfd);
   
   return EXIT_SUCCESS;
 }

@@ -11,9 +11,9 @@ typedef struct node_t{
 }node_t;
 
 typedef struct group_t{
-  node_t *node;
+  node_t *nodes;
   int count;
 }group_t;
 
-int join(char* fname);
+
 #endif

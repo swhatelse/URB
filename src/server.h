@@ -8,6 +8,6 @@
 
 #include"common.h"
 void connexion_init();
-void connexion_accept();
+int connexion_accept();
 void connexion_handler();
 #endif

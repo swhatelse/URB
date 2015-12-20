@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 #include<stdlib.h>
 #include<unistd.h>
+#include<string.h>
 
 int connection(const char* addr);
+int join(char* fname);
 #endif

@@ -1,21 +1,25 @@
 CC=gcc
 CFLAGS=-g -std=c99 -Wall -Werror
+BIN=bin
+TEST_BIN=$(BIN)/tests
+SRC=src
+TEST_SRC=$(SRC)/tests
 
-all: bin/main bin/server
+all: main
 
-tests: bin/tests/test_server bin/tests/test_client
+tests: test_server test_client
 
-bin/main: src/main.c src/common.c src/client.c
-	$(CC) $(CFLAGS) -o $@ $^
+main: $(SRC)/main.c $(SRC)/common.c $(SRC)/client.c
+	$(CC) $(CFLAGS) -o $(BIN)/$@ $^
 
-bin/tests/test_server: src/tests/test_server.c src/server.c
-	$(CC) $(CFLAGS) -o $@ $^
+test_server: $(TEST_SRC)/test_server.c $(SRC)/server.c
+	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
-bin/tests/test_client: src/tests/test_client.c src/client.c
-	$(CC) $(CFLAGS) -o $@ $^
+test_client: $(TEST_SRC)/test_client.c $(SRC)/client.c
+	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
 clean:
-	rm -rf bin/main
+	rm -rf $(BIN)/main
 
 clean_tests:
-	rm -rf bin/tests/test_server
+	rm -rf $(TEST_BIN)/test_server

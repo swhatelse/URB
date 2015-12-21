@@ -6,7 +6,8 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<string.h>
+#include<netdb.h>
 
-int connection(const char* addr);
+int connection(const char* addr, const int port);
 int join(char* fname);
 #endif

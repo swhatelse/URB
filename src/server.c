@@ -9,6 +9,7 @@ group_t connected_clients;
 
 void connexion_init(){
   struct sockaddr_in my_addr;
+  int soc = 9000;
   
   sfd = socket(AF_INET, SOCK_STREAM,0);
   if(sfd < 0){
@@ -17,7 +18,7 @@ void connexion_init(){
   }
   
   my_addr.sin_family = AF_INET;
-  my_addr.sin_port = htons(9000);
+  my_addr.sin_port = htons(soc);
   my_addr.sin_addr.s_addr = INADDR_ANY;
 
 

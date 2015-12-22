@@ -59,6 +59,7 @@ int join(char* fname){
         
         addr = strtok(group[i], &sep);
         port = atoi(strtok(NULL, &sep));
+        printf("%d\n", port);
         connection(addr, port);
     }
   

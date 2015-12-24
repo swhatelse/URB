@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=-g -std=c99 -Wall -Werror
+LDLIBS=-lpthread
 BIN=bin
 TEST_BIN=$(BIN)/tests
 SRC=src
@@ -9,8 +10,8 @@ all: main
 
 tests: test_server test_client
 
-main: $(SRC)/main.c $(SRC)/common.c $(SRC)/client.c
-	$(CC) $(CFLAGS) -o $(BIN)/$@ $^
+main: $(SRC)/main.c $(SRC)/common.c $(SRC)/client.c $(SRC)/server.c
+	$(CC) $(CFLAGS) -o $(BIN)/$@ $^ $(LDLIBS)
 
 test_server: $(TEST_SRC)/test_server.c $(SRC)/server.c
 	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^

@@ -33,7 +33,7 @@ void connexion_init(int port){
     }
 }
 
-void connexion_handler(){
+void* connexion_handler(){
     int i = 0;
     connected_clients.nodes = malloc(3*sizeof(node_t));
     connected_clients.count = nb_nodes;
@@ -42,9 +42,10 @@ void connexion_handler(){
         connected_clients.nodes[i].fd = connexion_accept();
         i++;
     }
+    return NULL;
 }
 
-static int connexion_accept(){
+int connexion_accept(){
     int cfd;
     struct sockaddr_in peer_addr;
     socklen_t peer_addr_size;

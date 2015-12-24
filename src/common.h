@@ -15,5 +15,6 @@ typedef struct group_t{
   int count;
 }group_t;
 
-
+group_t group;
+int running;
 #endif

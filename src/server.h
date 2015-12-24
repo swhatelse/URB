@@ -10,7 +10,6 @@
 #define SERVER_H
 
 void connexion_init(int port);
-static int connexion_accept();
-void connexion_handler();
-
+void* connexion_handler();
+int connexion_accept();
 #endif

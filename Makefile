@@ -6,7 +6,12 @@ TEST_BIN=$(BIN)/tests
 SRC=src
 TEST_SRC=$(SRC)/tests
 
-all: main
+.PHONY: directories clean clean_tests
+
+all: directories main tests
+
+directories:
+	mkdir -p $(BIN) $(TEST_BIN)
 
 tests: test_server test_client
 

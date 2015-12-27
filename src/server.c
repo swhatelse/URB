@@ -2,16 +2,17 @@
 
 #define BACKLOG 50
 #define PRINT(x)                                \
-  printf("Server : %s\n", x)
+    printf("Server : %s\n", x)
 
-int sfd;
-// TODO used for test
-int nb_nodes = 3;
-group_t connected_clients;
+int sfd; // listening socket for connexion
+group_t reception_sockets;
+node_t *first_node = NULL;
 
 void connexion_init(int port){
     struct sockaddr_in my_addr;
-  
+	// TODO here just for the moment
+	reception_sockets.nodes = NULL;
+
     sfd = socket(AF_INET, SOCK_STREAM,0);
     if(sfd < 0){
         perror("Failed to attribute the socket\n");
@@ -34,15 +35,72 @@ void connexion_init(int port){
 }
 
 void* connexion_handler(){
-    int i = 0;
-    connected_clients.nodes = malloc(3*sizeof(node_t));
-    connected_clients.count = nb_nodes;
-  
-    while(1){
-        connected_clients.nodes[i].fd = connexion_accept();
-        i++;
+	while(1){
+        connexion_accept();
     }
     return NULL;
+}
+
+int insert_node(const int fd, const struct sockaddr_in peer_addr){
+    node_t* n = malloc(sizeof(node_t));
+    node_t* current;
+  
+    n->fd = fd;
+    n->infos = peer_addr;
+
+    if(first_node == NULL){
+        first_node = n;
+        n->next = NULL;
+        n->prev = NULL;
+        return EXIT_SUCCESS;
+    }
+    else{
+        current = first_node;
+        while(current->next != NULL){
+            current = current->next;
+        }
+        current->next = n;
+        n->prev = current;
+        n->next = NULL;
+        return EXIT_SUCCESS;
+    }
+
+    return EXIT_FAILURE;
+}
+
+/** Add a node to the receiving list
+ * @param fd File descriptor associated to the addr
+ * @param addr Address information of the incomming connexion
+ * @return 0 if ok 1 if fails
+ */
+int add_node(const int fd, struct sockaddr_in addr){
+    for(int i = 0; i < receive_sockets.count; i++){
+        if(receive_sockets.nodes[i].infos.sin_addr.s_addr == 0){
+            receive_sockets.nodes[i].infos = addr;
+            receive_sockets.nodes[i].fd = fd;
+            return EXIT_SUCCESS;
+        }
+    }
+    return EXIT_FAILURE;
+}
+
+int remove_node(int fd){
+    node_t* current;
+    current = first_node;
+    while(current != NULL){
+        if(current->fd == fd){
+            if(current->prev != NULL){
+                current->prev->next = current->next;
+            }
+            if(current->next != NULL){
+                current->next->prev = current->prev;
+            }
+            return EXIT_SUCCESS;
+        }
+        current = first_node->next;
+    }
+    
+    return EXIT_FAILURE;
 }
 
 int connexion_accept(){
@@ -55,8 +113,10 @@ int connexion_accept(){
         perror("Failed to accept\n");
         exit(EXIT_FAILURE);    
     }
-  
+    
+    add_node(cfd, peer_addr);
     PRINT("Client connected");
 
     return cfd;
 }
+

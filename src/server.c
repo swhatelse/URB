@@ -1,3 +1,5 @@
+#include<assert.h>
+
 #include"server.h"
 
 #define BACKLOG 50
@@ -41,39 +43,13 @@ void* connexion_handler(){
     return NULL;
 }
 
-int insert_node(const int fd, const struct sockaddr_in peer_addr){
-    node_t* n = malloc(sizeof(node_t));
-    node_t* current;
-  
-    n->fd = fd;
-    n->infos = peer_addr;
-
-    if(first_node == NULL){
-        first_node = n;
-        n->next = NULL;
-        n->prev = NULL;
-        return EXIT_SUCCESS;
-    }
-    else{
-        current = first_node;
-        while(current->next != NULL){
-            current = current->next;
-        }
-        current->next = n;
-        n->prev = current;
-        n->next = NULL;
-        return EXIT_SUCCESS;
-    }
-
-    return EXIT_FAILURE;
-}
-
 /** Add a node to the receiving list
  * @param fd File descriptor associated to the addr
  * @param addr Address information of the incomming connexion
  * @return 0 if ok 1 if fails
  */
 int add_node(const int fd, struct sockaddr_in addr){
+    assert(fd > 2);
     for(int i = 0; i < receive_sockets.count; i++){
         if(receive_sockets.nodes[i].infos.sin_addr.s_addr == 0){
             receive_sockets.nodes[i].infos = addr;
@@ -81,25 +57,6 @@ int add_node(const int fd, struct sockaddr_in addr){
             return EXIT_SUCCESS;
         }
     }
-    return EXIT_FAILURE;
-}
-
-int remove_node(int fd){
-    node_t* current;
-    current = first_node;
-    while(current != NULL){
-        if(current->fd == fd){
-            if(current->prev != NULL){
-                current->prev->next = current->next;
-            }
-            if(current->next != NULL){
-                current->next->prev = current->prev;
-            }
-            return EXIT_SUCCESS;
-        }
-        current = first_node->next;
-    }
-    
     return EXIT_FAILURE;
 }
 

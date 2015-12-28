@@ -3,18 +3,18 @@
 #include"server.h"
 
 #define BACKLOG 50
-#define PRINT(x)                                \
-    printf("Server : %s\n", x)
 
 int sfd; // listening socket for connexion
 group_t reception_sockets;
 node_t *first_node = NULL;
 
-void connexion_init(int port){
+void connexion_init(){
     struct sockaddr_in my_addr;
-	// TODO here just for the moment
-	reception_sockets.nodes = NULL;
+    // TODO here just for the moment
+    reception_sockets.nodes = NULL;
 
+    PRINT("Initialization of the listener");
+    
     sfd = socket(AF_INET, SOCK_STREAM,0);
     if(sfd < 0){
         perror("Failed to attribute the socket\n");
@@ -22,7 +22,7 @@ void connexion_init(int port){
     }
   
     my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(port);
+    my_addr.sin_port = htons(my_port);
     my_addr.sin_addr.s_addr = INADDR_ANY;
 
     if(bind(sfd, (struct sockaddr*) &my_addr, sizeof(my_addr)) < 0 ){
@@ -37,7 +37,8 @@ void connexion_init(int port){
 }
 
 void* connexion_handler(){
-	while(1){
+    PRINT("Start to listen");
+    while(1){
         connexion_accept();
     }
     return NULL;
@@ -62,6 +63,7 @@ int add_node(const int fd, struct sockaddr_in addr){
 
 int connexion_accept(){
     int cfd;
+    char buf[64];
     struct sockaddr_in peer_addr;
     socklen_t peer_addr_size;
   
@@ -72,7 +74,9 @@ int connexion_accept(){
     }
     
     add_node(cfd, peer_addr);
-    PRINT("Client connected");
+    
+    sprintf(buf, "client %d %d is connected", peer_addr.sin_addr.s_addr, peer_addr.sin_port);
+    PRINT(buf);
 
     return cfd;
 }

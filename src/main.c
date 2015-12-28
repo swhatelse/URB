@@ -14,10 +14,10 @@
 
 int main(int argc, char *argv[]){
     int opt;
-    int port;
     /* pthread_t tsid, tcid; */
     pthread_t tsid;
     char* hostfile = NULL;
+    int port = 0;
 
     if(argc < 3){
         fprintf(stderr,"arguments missing");
@@ -42,10 +42,10 @@ int main(int argc, char *argv[]){
 
     // TODO: make it proper
     init(hostfile, "127.0.0.1", port);
-    connexion_init(port);
+    connexion_init();
     pthread_create(&tsid,NULL,&connexion_handler, NULL);
     
     pthread_join(tsid, NULL);
-    
+
     return EXIT_SUCCESS;
 }

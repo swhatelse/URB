@@ -21,7 +21,7 @@ main: $(SRC)/main.c $(SRC)/common.c $(SRC)/client.c $(SRC)/server.c
 test_server: $(TEST_SRC)/test_server.c $(SRC)/server.c
 	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
-test_client: $(TEST_SRC)/test_client.c $(SRC)/client.c
+test_client: $(TEST_SRC)/test_client.c $(SRC)/client.c $(SRC)/common.c
 	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
 clean:

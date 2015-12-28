@@ -11,6 +11,20 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+/******************************************
+ *
+ *               Macros
+ *
+ *****************************************/
+#define PRINT(string)                                 \
+    printf("%d: %s\n" , my_port, string)
+
+/******************************************
+ *
+ *               Types
+ *
+ *****************************************/
+
 typedef struct node_t{
     struct sockaddr_in infos;
     int fd;
@@ -22,11 +36,24 @@ typedef struct group_t{
     int count;
 }group_t;
 
+/******************************************
+ *
+ *               Global vars
+ *
+ *****************************************/
+
 group_t send_sockets;
 pthread_mutex_t send_sockets_mtx;
 group_t receive_sockets;
 pthread_mutex_t receive_sockets_mtx;
 int running;
+int my_port;
 
-int init(char *file, char *my_addr, int my_port);
+/******************************************
+ *
+ *               Functions
+ *
+ *****************************************/
+
+int init(char *file, char *my_addr, int port);
 #endif

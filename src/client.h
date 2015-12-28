@@ -8,6 +8,9 @@
 #include<string.h>
 #include<netdb.h>
 
+#include"common.h"
+
 int connection(const char* addr, const int port);
-int join(char* fname);
+/* int join(char* fname);*/
+void join();
 #endif

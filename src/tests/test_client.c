@@ -1,4 +1,5 @@
 #include<getopt.h>
+#include"../common.h"
 #include"../client.h"
 
 int main(int argc, char** argv){
@@ -6,14 +7,18 @@ int main(int argc, char** argv){
     char* config;
     char buf[8];
     int sfd[3];
+    int port;
   
     if(argc < 2){
         perror("Argument missing");
         exit(EXIT_FAILURE);
     }
   
-    while( (opt = getopt(argc, argv, "f:") ) != -1){
+    while( (opt = getopt(argc, argv, "f:p:") ) != -1){
         switch(opt){
+        case 'p':
+            port = atoi(optarg);
+            break;
         case 'f':
             config = optarg;
             break;
@@ -22,7 +27,8 @@ int main(int argc, char** argv){
         }
     }
 
-    join(config);
+    init(config, "127.0.0.1", port);
+    join();
   
     recv(sfd[0], buf, sizeof(buf), 0);
 

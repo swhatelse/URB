@@ -11,6 +11,6 @@
 #include"common.h"
 
 int connection(const char* addr, const int port);
-/* int join(char* fname);*/
 void join();
+void* message_handler();
 #endif

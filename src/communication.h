@@ -5,6 +5,8 @@
 #ifndef COMMUNICATION
 #define COMMUNICATION
 
-void beb(void *message);
+void receive_msg();
+void deliver(void* message);
+void beb(void* message);
 void urb(void* message);
 #endif

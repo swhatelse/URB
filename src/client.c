@@ -80,18 +80,18 @@ void join(){
     int *fds = NULL;
     char buf[64];
     fds = calloc(send_sockets.count, sizeof(int));
-    
+
     for(int i = 0; i < send_sockets.count; i++){
         fds[i] = socket(AF_INET, SOCK_STREAM,0);
         if(fds[i] != -1){
             if(connect(fds[i], (struct sockaddr*) &(send_sockets.nodes[i].infos), sizeof(struct sockaddr_in)) != -1){
                 send_sockets.nodes[i].alive = true;
                 send_sockets.nodes[i].fd = fds[i];
-                sprintf(buf, "Connected to %d %d", send_sockets.nodes[i].infos.sin_addr.s_addr, send_sockets.nodes[i].infos.sin_port);
+                sprintf(buf, "Connected to server %d %d", send_sockets.nodes[i].infos.sin_addr.s_addr, send_sockets.nodes[i].infos.sin_port);
                 PRINT(buf);
             }
             else{
-                sprintf(buf, "Connected to %d %d", send_sockets.nodes[i].infos.sin_addr.s_addr, send_sockets.nodes[i].infos.sin_port);
+                sprintf(buf, "Failed connect to server %d %d", send_sockets.nodes[i].infos.sin_addr.s_addr, send_sockets.nodes[i].infos.sin_port);
                 PRINT(buf);
                 send_sockets.nodes[i].alive = false;
             }
@@ -100,4 +100,9 @@ void join(){
             PRINT("Socket failed");
         }
     }
+}
+
+void* message_handler(){
+    join();
+    return NULL;
 }

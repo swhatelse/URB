@@ -10,12 +10,13 @@
 #include <netinet/in.h>
 
 #include"server.h"
+#include"client.h"
 #include"common.h"
 
 int main(int argc, char *argv[]){
     int opt;
     /* pthread_t tsid, tcid; */
-    pthread_t tsid;
+    pthread_t tsid, csid;
     char* hostfile = NULL;
     int port = 0;
 
@@ -44,6 +45,7 @@ int main(int argc, char *argv[]){
     init(hostfile, "127.0.0.1", port);
     connexion_init();
     pthread_create(&tsid,NULL,&connexion_handler, NULL);
+    pthread_create(&csid,NULL,&message_handler, NULL);
     
     pthread_join(tsid, NULL);
 

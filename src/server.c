@@ -2,15 +2,18 @@
 #include<sys/select.h>
 #include<sys/types.h>
 #include<unistd.h>
+#include<fcntl.h>
 #include<sys/time.h>
 
 #include"server.h"
+#include"communication.h"
 
 /********************************************
  *
  *             Macros
  *
  *******************************************/
+
 #define BACKLOG 50
 
 /********************************************
@@ -18,14 +21,17 @@
  *             Global vars
  *
  *******************************************/
+
 int listening_fd; // listening socket for connexion
 group_t reception_sockets; // Use for incomming messages
 fd_set reception_fd_set; // File descriptor to watch
+
 /********************************************
  *
  *             Functions
  *
  *******************************************/
+
 /** Prepare the socket for waiting connexion
  *
  */
@@ -60,39 +66,62 @@ void connexion_init(){
 void* connexion_handler(){
     struct timeval timeout;
     int event = 0;
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
     
+    FD_ZERO(&reception_fd_set);
+    FD_SET(listening_fd, &reception_fd_set);
+
     PRINT("Start to listen");
     while(1){
-        // Need to reinitialize the set each time
-        FD_ZERO(&reception_fd_set);
-        // Re-fill the set
-        FD_SET(listening_fd, &reception_fd_set);
-        for(int i = 0; i < receive_sockets.count; i++){
-            if(receive_sockets.nodes[i].fd != 0){
-                FD_SET(receive_sockets.nodes[i].fd, &reception_fd_set);
-            }
-        }
-
+        // Timeout needs to be reset each time
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
         
-        event = select(FD_SETSIZE, &reception_fd_set, NULL, NULL, &timeout);
+        fd_set active_set;
+        FD_ZERO(&active_set);
+        FD_SET(listening_fd, &active_set);
+        active_set = reception_fd_set;
+
+        event = select(FD_SETSIZE, &active_set, NULL, NULL, &timeout);
         if(event == -1){
-            
+            perror("Select failed");
         }
         else if(event){
-            if(FD_ISSET(listening_fd, &reception_fd_set)){
+            if(FD_ISSET(listening_fd, &active_set)){
                 connexion_accept();
             }
             
             for(int i = 0; i < receive_sockets.count; i++){
-                if(FD_ISSET(receive_sockets.nodes[i].fd, &reception_fd_set)){
-
+                if(FD_ISSET(receive_sockets.nodes[i].fd, &active_set)){
+                    message_t msg;
+                    int size = 0;
+                    PRINT("A message has arrived");
+                    size = recv(receive_sockets.nodes[i].fd, (void*)&msg, sizeof(message_t), 0);
+                    if(size > 0){
+                        switch(msg.type){
+                        case 'M':
+                            PRINT("Message received");
+                            break;
+                        case 'A':
+                            PRINT("Ack received");
+                            break;
+                        default:
+                            PRINT("Unknown type");
+                            break;
+                        }
+                    }
+                    else{
+                        PRINT("Deconnexion");
+                        FD_CLR(receive_sockets.nodes[i].fd, &reception_fd_set);
+                        close(receive_sockets.nodes[i].fd);
+                        receive_sockets.nodes[i].fd = -1;
+                        receive_sockets.nodes[i].infos.sin_addr.s_addr = 0;
+                        receive_sockets.nodes[i].infos.sin_port = 0;
+                    }
                 }
             }
         }
         else{
-
+            PRINT("No event");
         }
     }
     return NULL;
@@ -129,6 +158,8 @@ int connexion_accept(){
         exit(EXIT_FAILURE);    
     }
 
+    /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
+    
     // TODO: Need to detect if the group is full before adding
     add_node(cfd, peer_addr);
     

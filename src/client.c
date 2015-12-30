@@ -1,6 +1,12 @@
 #include<string.h>
 #include"client.h"
 
+/********************************************
+ *
+ *             Functions
+ *
+ *******************************************/
+
 int connection(const char* addr, const int port){
     int sfd;
     struct sockaddr_in srv_addr;

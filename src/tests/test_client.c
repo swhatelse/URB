@@ -1,12 +1,13 @@
 #include<getopt.h>
 #include"../common.h"
 #include"../client.h"
+#include"../communication.h"
 
 int main(int argc, char** argv){
     int opt;
     char* config;
-    char buf[8];
-    int sfd[3];
+    /* char buf[8]; */
+    /* int sfd[3]; */
     int port;
   
     if(argc < 2){
@@ -29,10 +30,10 @@ int main(int argc, char** argv){
 
     init(config, "127.0.0.1", port);
     join();
-  
-    recv(sfd[0], buf, sizeof(buf), 0);
 
-    /* PRINT(buf); */
-
+    message_t msg;
+    msg.type = 'M';
+    msg.message = NULL;
+    beb(msg);
     return EXIT_SUCCESS;
 }

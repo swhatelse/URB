@@ -4,6 +4,7 @@
 #include<getopt.h>
 #include<string.h>
 #include<assert.h>
+#include<unistd.h>
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -45,6 +46,7 @@ int main(int argc, char *argv[]){
     init(hostfile, "127.0.0.1", port);
     connexion_init();
     pthread_create(&tsid,NULL,&connexion_handler, NULL);
+    sleep(1);
     pthread_create(&csid,NULL,&message_handler, NULL);
     
     pthread_join(tsid, NULL);

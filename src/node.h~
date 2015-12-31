@@ -1,6 +1,0 @@
-
-typedef struct node_t{
-    struct sockaddr_in infos;
-    int fd;
-    bool alive;
-}node_t;

@@ -1,5 +1,4 @@
 #include<assert.h>
-#include<sys/select.h>
 #include<sys/types.h>
 #include<unistd.h>
 #include<fcntl.h>
@@ -21,10 +20,6 @@
  *             Global vars
  *
  *******************************************/
-
-int             listening_fd;       // listening socket for connexion
-group_t         reception_sockets;  // Use for incomming messages
-fd_set          reception_fd_set;   // File descriptor to watch
 
 /********************************************
  *
@@ -70,7 +65,6 @@ void handle_message(message_t* msg){
         if(!already_received){
             already_received == malloc(sizeof(message_list_t));
         }
-        
         break;
     case 'A':
         PRINT("Ack received");
@@ -85,12 +79,10 @@ void handle_disconnexion(int index){
     PRINT("Deconnexion");
     FD_CLR(receive_sockets.nodes[index].fd, &reception_fd_set);
     close(receive_sockets.nodes[index].fd);
-    receive_sockets.nodes[index].fd = -1;
-    receive_sockets.nodes[index].infos.sin_addr.s_addr = 0;
-    receive_sockets.nodes[index].infos.sin_port = 0;
+    remove_node(&(receive_sockets.nodes[index]));
 }
 
-void* connexion_handler(){
+void* listener_run(){
     struct timeval timeout;
     int event = 0;
     
@@ -139,28 +131,9 @@ void* connexion_handler(){
     return NULL;
 }
 
-/** Add a node to the receiving list
- * @param fd File descriptor associated to the addr
- * @param addr Address information of the incomming connexion
- * @return 0 if ok 1 if fails
- */
-int add_node(const int fd, const struct sockaddr_in addr){
-    assert(fd > 2); // To be sure the fd is valid
-    
-    for(int i = 0; i < receive_sockets.count; i++){
-        if(receive_sockets.nodes[i].infos.sin_addr.s_addr == 0){
-            receive_sockets.nodes[i].infos = addr;
-            receive_sockets.nodes[i].fd = fd;
-            FD_SET(fd, &reception_fd_set);
-            return EXIT_SUCCESS;
-        }
-    }
-    return EXIT_FAILURE;
-}
-
 int connexion_accept(){
     int cfd;
-    char buf[64];
+    char buf[64];  // Used for debug
     struct sockaddr_in peer_addr;
     socklen_t peer_addr_size;
   

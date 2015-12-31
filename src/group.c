@@ -1,6 +1,7 @@
 #include<string.h>
-#include"client.h"
 
+#include"group.h"
+#include"listener.h"
 /********************************************
  *
  *             Functions
@@ -34,6 +35,9 @@ int connection(const char* addr, const int port){
     return sfd;
 }
 
+/** Join the group
+ *
+ */
 void join(){
     int *fds = NULL;
     char buf[64];
@@ -58,6 +62,31 @@ void join(){
             PRINT("Socket failed");
         }
     }
+}
+
+/** Add a node to the receiving list
+ * @param fd File descriptor associated to the addr
+ * @param addr Address information of the incomming connexion
+ * @return 0 if ok 1 if fails
+ */
+int add_node(const int fd, const struct sockaddr_in addr){
+    assert(fd > 2); // To be sure the fd is valid
+    
+    for(int i = 0; i < receive_sockets.count; i++){
+        if(receive_sockets.nodes[i].infos.sin_addr.s_addr == 0){
+            receive_sockets.nodes[i].infos = addr;
+            receive_sockets.nodes[i].fd = fd;
+            FD_SET(fd, &reception_fd_set);
+            return EXIT_SUCCESS;
+        }
+    }
+    return EXIT_FAILURE;
+}
+
+void remove_node(node_t* node){
+    node->fd = -1;
+    node->infos.sin_addr.s_addr = 0;
+    node->infos.sin_port = 0;
 }
 
 void* message_handler(){

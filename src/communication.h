@@ -6,6 +6,7 @@
 #ifndef COMMUNICATION
 #define COMMUNICATION
 
+// Type definition
 typedef struct message_t{
     char type;
     int id;
@@ -19,8 +20,10 @@ typedef struct message_list_t{
     struct message_list_t* next;
 }message_list_t;
 
+// Global vars
 message_list_t *already_received;
 
+// Functions
 bool is_already_in(message_t msg, node_t sender);
 void acknowledge(message_t msg);
 void deliver(const message_t message);

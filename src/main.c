@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 
 #include"listener.h"
-#include"client.h"
+#include"group.h"
 #include"common.h"
 
 int main(int argc, char *argv[]){
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
     // TODO: make it proper
     init(hostfile, "127.0.0.1", port);
     listener_init();
-    pthread_create(&tsid,NULL,&connexion_handler, NULL);
+    pthread_create(&tsid,NULL,&listener_run, NULL);
     sleep(1);
     pthread_create(&csid,NULL,&message_handler, NULL);
     

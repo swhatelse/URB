@@ -26,6 +26,6 @@ int main(int argc, char** argv){
 
     init(hostfile, "127.0.0.1", port);
     listener_init(port);
-    connexion_handler();
+    listener_run();
     return EXIT_SUCCESS;
 }

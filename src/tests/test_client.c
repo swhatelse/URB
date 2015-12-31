@@ -1,6 +1,6 @@
 #include<getopt.h>
 #include"../common.h"
-#include"../client.h"
+#include"../group.h"
 #include"../communication.h"
 
 int main(int argc, char** argv){

@@ -31,21 +31,12 @@ typedef struct node_t{
     bool alive;
 }node_t;
 
-typedef struct group_t{
-    node_t *nodes;
-    int count;
-}group_t;
-
 /******************************************
  *
  *               Global vars
  *
  *****************************************/
 
-group_t send_sockets;
-pthread_mutex_t send_sockets_mtx;
-group_t receive_sockets;
-pthread_mutex_t receive_sockets_mtx;
 int running;
 int my_port;
 

@@ -4,6 +4,7 @@
 
 #include"communication.h"
 #include"common.h"
+#include"group.h"
 
 /********************************************
  *

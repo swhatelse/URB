@@ -1,4 +1,5 @@
 #include"common.h"
+#include"group.h"
 
 /** Initialize the structures of the group
  * @param file Name of the file containing the hosts. Host format must be in A.B.C.D:port

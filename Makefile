@@ -18,10 +18,10 @@ tests: test_server test_client
 main: $(SRC)/main.c $(SRC)/common.c $(SRC)/group.c $(SRC)/listener.c
 	$(CC) $(CFLAGS) -o $(BIN)/$@ $^ $(LDLIBS)
 
-test_server: $(TEST_SRC)/test_server.c $(SRC)/listener.c $(SRC)/common.c $(SRC)/communication.c $(SRC)/group.c
+test_server: $(TEST_SRC)/test_server.c $(SRC)/listener.c $(SRC)/common.c $(SRC)/communication.c $(SRC)/group.c $(SRC)/node.c
 	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
-test_client: $(TEST_SRC)/test_client.c $(SRC)/group.c $(SRC)/common.c $(SRC)/communication.c
+test_client: $(TEST_SRC)/test_client.c $(SRC)/group.c $(SRC)/common.c $(SRC)/communication.c $(SRC)/node.c
 	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
 clean:

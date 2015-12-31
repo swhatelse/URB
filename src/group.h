@@ -9,6 +9,7 @@
 #include<netdb.h>
 
 #include"common.h"
+#include"node.h"
 
 // Types
 typedef struct group_t{

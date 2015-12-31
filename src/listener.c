@@ -5,7 +5,7 @@
 #include<fcntl.h>
 #include<sys/time.h>
 
-#include"server.h"
+#include"listener.h"
 #include"communication.h"
 
 /********************************************
@@ -22,9 +22,9 @@
  *
  *******************************************/
 
-int listening_fd; // listening socket for connexion
-group_t reception_sockets; // Use for incomming messages
-fd_set reception_fd_set; // File descriptor to watch
+int             listening_fd;       // listening socket for connexion
+group_t         reception_sockets;  // Use for incomming messages
+fd_set          reception_fd_set;   // File descriptor to watch
 
 /********************************************
  *
@@ -35,11 +35,11 @@ fd_set reception_fd_set; // File descriptor to watch
 /** Prepare the socket for waiting connexion
  *
  */
-void connexion_init(){
+void listener_init(){
     struct sockaddr_in my_addr;
     // TODO here just for the moment
-    /* reception_sockets.nodes = NULL; */
-
+    already_received = NULL;
+        
     PRINT("Initialization of the listener");
     
     listening_fd = socket(AF_INET, SOCK_STREAM,0);
@@ -61,6 +61,33 @@ void connexion_init(){
         perror("Failed to listen\n");
         exit(EXIT_FAILURE);    
     }
+}
+
+void handle_message(message_t* msg){
+    switch(msg->type){
+    case 'M':
+        PRINT("Message received");
+        if(!already_received){
+            already_received == malloc(sizeof(message_list_t));
+        }
+        
+        break;
+    case 'A':
+        PRINT("Ack received");
+        break;
+    default:
+        PRINT("Unknown type");
+        break;
+    }
+}
+
+void handle_disconnexion(int index){
+    PRINT("Deconnexion");
+    FD_CLR(receive_sockets.nodes[index].fd, &reception_fd_set);
+    close(receive_sockets.nodes[index].fd);
+    receive_sockets.nodes[index].fd = -1;
+    receive_sockets.nodes[index].infos.sin_addr.s_addr = 0;
+    receive_sockets.nodes[index].infos.sin_port = 0;
 }
 
 void* connexion_handler(){
@@ -92,30 +119,15 @@ void* connexion_handler(){
             
             for(int i = 0; i < receive_sockets.count; i++){
                 if(FD_ISSET(receive_sockets.nodes[i].fd, &active_set)){
-                    message_t msg;
+                    message_t *msg = malloc(sizeof(message_t));
                     int size = 0;
-                    PRINT("A message has arrived");
-                    size = recv(receive_sockets.nodes[i].fd, (void*)&msg, sizeof(message_t), 0);
+                    size = recv(receive_sockets.nodes[i].fd, (void*)msg, sizeof(message_t), 0);
                     if(size > 0){
-                        switch(msg.type){
-                        case 'M':
-                            PRINT("Message received");
-                            break;
-                        case 'A':
-                            PRINT("Ack received");
-                            break;
-                        default:
-                            PRINT("Unknown type");
-                            break;
-                        }
+                        handle_message(msg);
                     }
                     else{
-                        PRINT("Deconnexion");
-                        FD_CLR(receive_sockets.nodes[i].fd, &reception_fd_set);
-                        close(receive_sockets.nodes[i].fd);
-                        receive_sockets.nodes[i].fd = -1;
-                        receive_sockets.nodes[i].infos.sin_addr.s_addr = 0;
-                        receive_sockets.nodes[i].infos.sin_port = 0;
+                        free(msg);
+                        handle_disconnexion(i);
                     }
                 }
             }
@@ -155,7 +167,7 @@ int connexion_accept(){
     cfd = accept(listening_fd, (struct sockaddr*) &peer_addr, &peer_addr_size);
     if(cfd < 0){
         perror("Failed to accept\n");
-        exit(EXIT_FAILURE);    
+        /* exit(EXIT_FAILURE);     */
     }
 
     /* fcntl(cfd, F_SETFL, O_NONBLOCK); */

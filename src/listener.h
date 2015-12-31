@@ -9,7 +9,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-void connexion_init();
+void listener_init();
 void* connexion_handler();
 int connexion_accept();
 #endif

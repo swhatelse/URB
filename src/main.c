@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include"server.h"
+#include"listener.h"
 #include"client.h"
 #include"common.h"
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
 
     // TODO: make it proper
     init(hostfile, "127.0.0.1", port);
-    connexion_init();
+    listener_init();
     pthread_create(&tsid,NULL,&connexion_handler, NULL);
     sleep(1);
     pthread_create(&csid,NULL,&message_handler, NULL);

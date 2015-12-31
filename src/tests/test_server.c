@@ -1,5 +1,5 @@
 #include<getopt.h>
-#include"../server.h"
+#include"../listener.h"
 
 int main(int argc, char** argv){
     int opt;
@@ -25,7 +25,7 @@ int main(int argc, char** argv){
     }
 
     init(hostfile, "127.0.0.1", port);
-    connexion_init(port);
+    listener_init(port);
     connexion_handler();
     return EXIT_SUCCESS;
 }

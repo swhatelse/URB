@@ -15,10 +15,10 @@ directories:
 
 tests: test_server test_client
 
-main: $(SRC)/main.c $(SRC)/common.c $(SRC)/client.c $(SRC)/server.c
+main: $(SRC)/main.c $(SRC)/common.c $(SRC)/client.c $(SRC)/listener.c
 	$(CC) $(CFLAGS) -o $(BIN)/$@ $^ $(LDLIBS)
 
-test_server: $(TEST_SRC)/test_server.c $(SRC)/server.c $(SRC)/common.c $(SRC)/communication.c
+test_server: $(TEST_SRC)/test_server.c $(SRC)/listener.c $(SRC)/common.c $(SRC)/communication.c
 	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
 
 test_client: $(TEST_SRC)/test_client.c $(SRC)/client.c $(SRC)/common.c $(SRC)/communication.c
@@ -28,4 +28,4 @@ clean:
 	rm -rf $(BIN)/main
 
 clean_tests:
-	rm -rf $(TEST_BIN)/test_server
+	rm -rf $(TEST_BIN)/test_server $(TEST_BIN)/test_client

@@ -56,4 +56,5 @@ int my_port;
  *****************************************/
 
 int init(char *file, char *my_addr, int port);
+bool is_the_same_node(node_t node1, node_t node2);
 #endif

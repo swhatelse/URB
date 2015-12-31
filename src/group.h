@@ -12,7 +12,7 @@
 
 // Types
 typedef struct group_t{
-    node_t *nodes;
+    node_t **nodes;
     int count;
 }group_t;
 

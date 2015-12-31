@@ -34,8 +34,14 @@ int init(char *file, char *my_addr, int port){
 
     send_sockets.count = group_count - 1;
     receive_sockets.count = group_count - 1;
-    send_sockets.nodes = calloc(send_sockets.count, sizeof(node_t));
-    receive_sockets.nodes = calloc(receive_sockets.count, sizeof(node_t)); 
+    send_sockets.nodes = calloc(send_sockets.count, sizeof(node_t*));
+    receive_sockets.nodes = calloc(receive_sockets.count, sizeof(node_t*));
+
+    // Just initialize the groups
+    for(int i = 0; i < group_count - 1; i++){
+        send_sockets.nodes[i] = NULL;
+        receive_sockets.nodes[i] = NULL;
+    }
 
     rewind(fd);
 
@@ -43,9 +49,10 @@ int init(char *file, char *my_addr, int port){
         addr = strtok(buf, &sep);
         remote_port = atoi(strtok(NULL, &sep));
         if( remote_port != my_port || strcmp(addr,my_addr) != 0){
-            (send_sockets.nodes[i]).infos.sin_family = AF_INET;
-            (send_sockets.nodes[i]).infos.sin_port = htons(remote_port);
-            (send_sockets.nodes[i]).infos.sin_addr.s_addr = inet_addr(addr);
+            send_sockets.nodes[i] = malloc(sizeof(node_t));
+            (send_sockets.nodes[i])->infos.sin_family = AF_INET;
+            (send_sockets.nodes[i])->infos.sin_port = htons(remote_port);
+            (send_sockets.nodes[i])->infos.sin_addr.s_addr = inet_addr(addr);
             i++;
         }
     }

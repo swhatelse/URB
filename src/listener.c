@@ -218,26 +218,6 @@ void* listener_run(){
         }
         else if(event){
             handle_event(active_set);
-            /* if(FD_ISSET(listening_fd, &active_set)){ */
-            /*     connexion_accept(); */
-            /* } */
-            
-            /* for(int i = 0; i < receive_sockets.count; i++){ */
-            /*     if(receive_sockets.nodes[i] != NULL && */
-            /*        FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){ */
-            /*         message_t *msg = malloc(sizeof(message_t)); */
-            /*         int size = 0; */
-            /*         // The size of message_t is used here because it is the longuest we can receive. */
-            /*         size = recv(receive_sockets.nodes[i]->connexion.fd, (void*)msg, sizeof(message_t), 0); */
-            /*         if(size > 0){ */
-            /*             handle_message(msg); */
-            /*         } */
-            /*         else{ */
-            /*             free(msg); */
-            /*             handle_disconnexion(i); */
-            /*         } */
-            /*     } */
-            /* } */
         }
         else{
             PRINT("No event");
@@ -260,7 +240,6 @@ int connexion_accept(){
     FD_SET(cfd, &reception_fd_set);
     /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
     connexion_pending_add(cfd, peer_addr);    
-    /* add_node(cfd, peer_addr); */
     
     sprintf(buf, "client from %d %d is connected", peer_addr.sin_addr.s_addr, peer_addr.sin_port);
     PRINT(buf);

@@ -11,6 +11,13 @@
 #ifndef LISTENER_H
 #define LISTENER_H
 
+// Types
+typedef struct connexions_pending_t{
+    int fd;
+    struct connexions_pending_t* prev;
+    struct connexions_pending_t* next;
+}connexions_pending_t;
+
 // Globals
 int             listening_fd;       // listening socket for connexion
 group_t         reception_sockets;  // Use for incomming messages

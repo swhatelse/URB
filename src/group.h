@@ -26,7 +26,7 @@ pthread_mutex_t receive_sockets_mtx;
 // Functions
 int connexion(connexion_t* cnx);
 void join();
-int add_node(const int fd, const struct sockaddr_in addr);
+int add_node(const connexion_t cnx, const int node_id);
 void remove_node(node_t* node);
 void* message_handler();
 #endif

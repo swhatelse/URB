@@ -20,12 +20,52 @@
  *             Global vars
  *
  *******************************************/
-
+connexions_pending_t* connexions_pending;
 /********************************************
  *
  *             Functions
  *
  *******************************************/
+
+void connexion_pending_add(int fd, struct sockaddr_in addr){
+    connexions_pending_t* new = malloc(sizeof(connexions_pending_t));
+    new->connexion.fd = fd;
+    new->connexion.infos = addr;
+    new->next = NULL;
+    
+    if(!connexions_pending){
+        new->prev = NULL;
+        connexions_pending = new;
+    }
+    else{
+        connexions_pending_t* current = connexions_pending;
+        while(current->next != NULL){
+            current = current->next;
+        }
+        new->prev = current;
+    }
+}
+
+void connexion_pending_remove(connexions_pending_t* cnx){
+    if(cnx->prev){
+        cnx->prev->next = cnx->next;
+    }
+    if(cnx->next){
+        cnx->next->prev = cnx->prev;
+    }
+    free(cnx);
+}
+
+connexions_pending_t* connexions_pending_get(int fd){
+    connexions_pending_t* current = connexions_pending;
+    while(current != NULL){
+        if(current->connexion.fd == fd){
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
 
 /** Prepare the socket for waiting connexion
  *
@@ -34,6 +74,7 @@ void listener_init(){
     struct sockaddr_in my_addr;
     // TODO here just for the moment
     already_received = NULL;
+    connexions_pending = NULL;
         
     PRINT("Initialization of the listener");
     
@@ -58,31 +99,69 @@ void listener_init(){
     }
 }
 
+void handle_id(message_id_t* msg){
+    PRINT("Node identified");
+    printf("%d\n", msg->node_id);    
+}
+
+void handle_ack(message_t* ack){
+    PRINT("Ack received");
+}
+
+void handle_normal(message_t* msg){
+    PRINT("Message received");
+    if(!is_already_in(*msg, already_received)){
+        insert_message(msg, already_received);
+    }
+    else{
+        // Message already received, we can drop it
+        free(msg);
+        msg = NULL;
+    }
+}
+
 void handle_message(message_t* msg){
     switch(msg->type){
     case 'M':
-        PRINT("Message received");
-        
-        if(!is_already_in(*msg, already_received)){
-            insert_message(msg, already_received);
-        }
-        else{
-            // Message already received, we can drop it
-            free(msg);
-            msg = NULL;
-        }
-        
+        handle_normal(msg);
         break;
     case 'A':
-        PRINT("Ack received");
+        handle_ack(msg);
         break;
     case 'I':
-        PRINT("Node identified");
-        printf("%d\n", *((int*)(msg->content)));
+        handle_id((message_id_t*)msg);
         break;
     default:
         PRINT("Unknown type");
         break;
+    }
+}
+
+void handle_connexion_requests(fd_set active_set){
+    int size;
+    message_id_t msg;
+    connexions_pending_t* current = connexions_pending;
+    
+    // First connexion step
+    if(FD_ISSET(listening_fd, &active_set)){
+        connexion_accept();
+    }
+    
+    // Accept pending connexion
+    while(current != NULL){
+        if(FD_ISSET(current->connexion.fd, &active_set)){
+            size = recv(current->connexion.fd, (void*)&msg, sizeof(message_id_t), 0);
+            if(size > 0){
+                add_node(current->connexion, msg.node_id);
+            }
+            else{
+                // Disconnection
+                FD_CLR(current->connexion.fd, &reception_fd_set);
+                close(current->connexion.fd);
+                connexion_pending_remove(current);
+            }
+        }
+        current = current->next;
     }
 }
 
@@ -91,6 +170,27 @@ void handle_disconnexion(int index){
     FD_CLR(receive_sockets.nodes[index]->connexion.fd, &reception_fd_set);
     close(receive_sockets.nodes[index]->connexion.fd);
     remove_node(receive_sockets.nodes[index]);
+}
+
+void handle_event(fd_set active_set){
+    handle_connexion_requests(active_set);
+    
+    for(int i = 0; i < receive_sockets.count; i++){
+        if(receive_sockets.nodes[i] != NULL &&
+           FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){
+            message_t *msg = malloc(sizeof(message_t));
+            int size = 0;
+            // The size of message_t is used here because it is the longuest we can receive.
+            size = recv(receive_sockets.nodes[i]->connexion.fd, (void*)msg, sizeof(message_t), 0);
+            if(size > 0){
+                handle_message(msg);
+            }
+            else{
+                free(msg);
+                handle_disconnexion(i);
+            }
+        }
+    }
 }
 
 void* listener_run(){
@@ -103,38 +203,41 @@ void* listener_run(){
     PRINT("Start to listen");
     while(1){
         // Timeout needs to be reset each time
-        timeout.tv_sec = 1;
+        timeout.tv_sec = 2;
         timeout.tv_usec = 0;
-        
+
         fd_set active_set;
         FD_ZERO(&active_set);
         FD_SET(listening_fd, &active_set);
+        
         active_set = reception_fd_set;
-
+       
         event = select(FD_SETSIZE, &active_set, NULL, NULL, &timeout);
         if(event == -1){
             perror("Select failed");
         }
         else if(event){
-            if(FD_ISSET(listening_fd, &active_set)){
-                connexion_accept();
-            }
+            handle_event(active_set);
+            /* if(FD_ISSET(listening_fd, &active_set)){ */
+            /*     connexion_accept(); */
+            /* } */
             
-            for(int i = 0; i < receive_sockets.count; i++){
-                if(receive_sockets.nodes[i] != NULL &&
-                   FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){
-                    message_t *msg = malloc(sizeof(message_t));
-                    int size = 0;
-                    size = recv(receive_sockets.nodes[i]->connexion.fd, (void*)msg, sizeof(message_t), 0);
-                    if(size > 0){
-                        handle_message(msg);
-                    }
-                    else{
-                        free(msg);
-                        handle_disconnexion(i);
-                    }
-                }
-            }
+            /* for(int i = 0; i < receive_sockets.count; i++){ */
+            /*     if(receive_sockets.nodes[i] != NULL && */
+            /*        FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){ */
+            /*         message_t *msg = malloc(sizeof(message_t)); */
+            /*         int size = 0; */
+            /*         // The size of message_t is used here because it is the longuest we can receive. */
+            /*         size = recv(receive_sockets.nodes[i]->connexion.fd, (void*)msg, sizeof(message_t), 0); */
+            /*         if(size > 0){ */
+            /*             handle_message(msg); */
+            /*         } */
+            /*         else{ */
+            /*             free(msg); */
+            /*             handle_disconnexion(i); */
+            /*         } */
+            /*     } */
+            /* } */
         }
         else{
             PRINT("No event");
@@ -147,18 +250,17 @@ int connexion_accept(){
     int cfd;
     char buf[64];  // Used for debug
     struct sockaddr_in peer_addr;
-    socklen_t peer_addr_size;
+    socklen_t peer_addr_size = sizeof(peer_addr);
   
     cfd = accept(listening_fd, (struct sockaddr*) &peer_addr, &peer_addr_size);
     if(cfd < 0){
         perror("Failed to accept\n");
-        /* exit(EXIT_FAILURE);     */
     }
 
+    FD_SET(cfd, &reception_fd_set);
     /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
-    
-    // TODO: Need to detect if the group is full before adding
-    add_node(cfd, peer_addr);
+    connexion_pending_add(cfd, peer_addr);    
+    /* add_node(cfd, peer_addr); */
     
     sprintf(buf, "client from %d %d is connected", peer_addr.sin_addr.s_addr, peer_addr.sin_port);
     PRINT(buf);

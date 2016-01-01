@@ -12,7 +12,6 @@
  *******************************************/
 
 int connexion(connexion_t* cnx){
-
     if(connect(cnx->fd, (struct sockaddr*) &(cnx->infos), sizeof(cnx->infos)) < 0){
         perror("Failed to name the socket");
         return EXIT_FAILURE;    
@@ -60,24 +59,25 @@ void join(){
  * @param addr Address information of the incomming connexion
  * @return 0 if ok 1 if fails
  */
-int add_node(const int fd, const struct sockaddr_in addr){
-    assert(fd > 2); // To be sure the fd is valid
+/* int add_node(const int fd, const struct sockaddr_in addr){ */
+int add_node(const connexion_t cnx, const int node_id){
+    assert(cnx.fd > 2); // To be sure the fd is valid
+    char buf[64];
     
     for(int i = 0; i < receive_sockets.count; i++){
-        /* if(receive_sockets.nodes[i].connexion.infos.sin_addr.s_addr == 0){ */
-        if(receive_sockets.nodes[i] == NULL){
-            receive_sockets.nodes[i] = malloc(sizeof(node_t));
-            receive_sockets.nodes[i]->connexion.infos = addr;
-            receive_sockets.nodes[i]->connexion.fd = fd;
-            FD_SET(fd, &reception_fd_set);
+        if(receive_sockets.nodes[i]->id == node_id){
+            receive_sockets.nodes[i]->connexion = cnx;
+            sprintf(buf, "%d %d identified as %d", receive_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, receive_sockets.nodes[i]->connexion.infos.sin_port, receive_sockets.nodes[i]->id);
+            PRINT(buf);
             return EXIT_SUCCESS;
         }
     }
     return EXIT_FAILURE;
 }
 
+// TODO is it useful?
 void remove_node(node_t* node){
-    free(node);
+    /* free(node); */
 }
 
 void* message_handler(){

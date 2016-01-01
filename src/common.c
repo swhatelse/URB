@@ -62,7 +62,7 @@ int init(char *file, char *my_addr, int port){
 
             // Pre-fill the listening sockets
             receive_sockets.nodes[i] = malloc(sizeof(node_t));
-            receive_sockets.nodes[i]->id;
+            receive_sockets.nodes[i]->id = node_id;
             i++;
         }
         else{

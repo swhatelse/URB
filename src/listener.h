@@ -7,13 +7,14 @@
 
 #include"common.h"
 #include"group.h"
+#include"node.h"
 
 #ifndef LISTENER_H
 #define LISTENER_H
 
 // Types
 typedef struct connexions_pending_t{
-    int fd;
+    connexion_t connexion;
     struct connexions_pending_t* prev;
     struct connexions_pending_t* next;
 }connexions_pending_t;

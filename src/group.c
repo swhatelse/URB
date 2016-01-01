@@ -19,11 +19,10 @@ int connexion(connexion_t* cnx){
     }
 
     // TODO send node id
-    PRINT("Sending id");
-    message_t msg;
+    printf("Sending id %d\n", my_id);
+    message_id_t msg;
     msg.type = 'I';
-    msg.content = malloc(sizeof(int));
-    msg.content = (void*)(&my_id);
+    msg.node_id = my_id;
     send(cnx->fd, &msg, sizeof(msg), 0);
     
     return EXIT_SUCCESS;

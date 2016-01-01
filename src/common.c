@@ -53,11 +53,16 @@ int init(char *file, char *my_addr, int port){
         remote_port = atoi(strtok(NULL, &sep));
         node_id = atoi( strtok(NULL, &sep) );
         if( remote_port != my_port || strcmp(addr,my_addr) != 0){
+            // Fill the connecting sockets
             send_sockets.nodes[i] = malloc(sizeof(node_t));
             send_sockets.nodes[i]->connexion.infos.sin_family = AF_INET;
             send_sockets.nodes[i]->connexion.infos.sin_port = htons(remote_port);
             send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr = inet_addr(addr);
             send_sockets.nodes[i]->id = node_id;
+
+            // Pre-fill the listening sockets
+            receive_sockets.nodes[i] = malloc(sizeof(node_t));
+            receive_sockets.nodes[i]->id;
             i++;
         }
         else{

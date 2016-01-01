@@ -62,9 +62,16 @@ void handle_message(message_t* msg){
     switch(msg->type){
     case 'M':
         PRINT("Message received");
-        if(!already_received){
-            already_received == malloc(sizeof(message_list_t));
+        
+        if(!is_already_in(*msg, already_received)){
+            insert_message(msg, already_received);
         }
+        else{
+            // Message already received, we can drop it
+            free(msg);
+            msg = NULL;
+        }
+        
         break;
     case 'A':
         PRINT("Ack received");
@@ -77,8 +84,8 @@ void handle_message(message_t* msg){
 
 void handle_disconnexion(int index){
     PRINT("Deconnexion");
-    FD_CLR(receive_sockets.nodes[index]->fd, &reception_fd_set);
-    close(receive_sockets.nodes[index]->fd);
+    FD_CLR(receive_sockets.nodes[index]->connexion.fd, &reception_fd_set);
+    close(receive_sockets.nodes[index]->connexion.fd);
     remove_node(receive_sockets.nodes[index]);
 }
 
@@ -111,10 +118,10 @@ void* listener_run(){
             
             for(int i = 0; i < receive_sockets.count; i++){
                 if(receive_sockets.nodes[i] != NULL &&
-                   FD_ISSET(receive_sockets.nodes[i]->fd, &active_set)){
+                   FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){
                     message_t *msg = malloc(sizeof(message_t));
                     int size = 0;
-                    size = recv(receive_sockets.nodes[i]->fd, (void*)msg, sizeof(message_t), 0);
+                    size = recv(receive_sockets.nodes[i]->connexion.fd, (void*)msg, sizeof(message_t), 0);
                     if(size > 0){
                         handle_message(msg);
                     }

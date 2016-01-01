@@ -11,6 +11,7 @@ int init(char *file, char *my_addr, int port){
     int i = 0;
     char *addr;
     int remote_port;
+    int node_id;
     char sep = ':';
 
     assert(file != NULL);
@@ -48,11 +49,13 @@ int init(char *file, char *my_addr, int port){
     while(fgets(buf, sizeof(buf), fd) != NULL){
         addr = strtok(buf, &sep);
         remote_port = atoi(strtok(NULL, &sep));
+        node_id = atoi(strtok(NULL, &sep));
         if( remote_port != my_port || strcmp(addr,my_addr) != 0){
             send_sockets.nodes[i] = malloc(sizeof(node_t));
-            (send_sockets.nodes[i])->infos.sin_family = AF_INET;
-            (send_sockets.nodes[i])->infos.sin_port = htons(remote_port);
-            (send_sockets.nodes[i])->infos.sin_addr.s_addr = inet_addr(addr);
+            (send_sockets.nodes[i])->connexion.infos.sin_family = AF_INET;
+            (send_sockets.nodes[i])->connexion.infos.sin_port = htons(remote_port);
+            (send_sockets.nodes[i])->connexion.infos.sin_addr.s_addr = inet_addr(addr);
+            send_sockets.nodes[i]->id = node_id;
             i++;
         }
     }

@@ -9,13 +9,14 @@
 // Type definition
 typedef struct message_t{
     char type;
-    int id;
-    void* message;
+    int sequence_nb;
+    node_t sender;
+    void* content;
 }message_t;
 
 typedef struct message_list_t{
-    message_t msg;
-    node_t sender;
+    message_t* msg;
+    int id;
     struct message_list_t* prev;
     struct message_list_t* next;
 }message_list_t;
@@ -24,7 +25,9 @@ typedef struct message_list_t{
 message_list_t *already_received;
 
 // Functions
-bool is_already_in(message_t msg, node_t sender);
+void insert_message(message_t* msg, message_list_t* list);
+bool remove_message(const int id);
+bool is_already_in(const message_t msg, message_list_t* list);
 void acknowledge(message_t msg);
 void deliver(const message_t message);
 int beb(const message_t msg);

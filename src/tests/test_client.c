@@ -33,7 +33,7 @@ int main(int argc, char** argv){
 
     message_t msg;
     msg.type = 'M';
-    msg.message = NULL;
+    msg.content = NULL;
     beb(msg);
     return EXIT_SUCCESS;
 }

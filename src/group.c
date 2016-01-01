@@ -41,16 +41,14 @@ void join(){
     for(int i = 0; i < send_sockets.count; i++){
         fds[i] = socket(AF_INET, SOCK_STREAM,0);
         if(fds[i] != -1){
-            if(connect(fds[i], (struct sockaddr*) &(send_sockets.nodes[i]->infos), sizeof(struct sockaddr_in)) != -1){
-                send_sockets.nodes[i]->alive = true;
-                send_sockets.nodes[i]->fd = fds[i];
-                sprintf(buf, "Connected to server %d %d", send_sockets.nodes[i]->infos.sin_addr.s_addr, send_sockets.nodes[i]->infos.sin_port);
+            if(connect(fds[i], (struct sockaddr*) &(send_sockets.nodes[i]->connexion.infos), sizeof(struct sockaddr_in)) != -1){
+                send_sockets.nodes[i]->connexion.fd = fds[i];
+                sprintf(buf, "Connected to server %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port);
                 PRINT(buf);
             }
             else{
-                sprintf(buf, "Failed connect to server %d %d", send_sockets.nodes[i]->infos.sin_addr.s_addr, send_sockets.nodes[i]->infos.sin_port);
+                sprintf(buf, "Failed connect to server %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port);
                 PRINT(buf);
-                send_sockets.nodes[i]->alive = false;
             }
         }
         else{
@@ -68,11 +66,11 @@ int add_node(const int fd, const struct sockaddr_in addr){
     assert(fd > 2); // To be sure the fd is valid
     
     for(int i = 0; i < receive_sockets.count; i++){
-        /* if(receive_sockets.nodes[i].infos.sin_addr.s_addr == 0){ */
+        /* if(receive_sockets.nodes[i].connexion.infos.sin_addr.s_addr == 0){ */
         if(receive_sockets.nodes[i] == NULL){
             receive_sockets.nodes[i] = malloc(sizeof(node_t));
-            receive_sockets.nodes[i]->infos = addr;
-            receive_sockets.nodes[i]->fd = fd;
+            receive_sockets.nodes[i]->connexion.infos = addr;
+            receive_sockets.nodes[i]->connexion.fd = fd;
             FD_SET(fd, &reception_fd_set);
             return EXIT_SUCCESS;
         }

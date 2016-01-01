@@ -15,7 +15,7 @@ directories:
 
 tests: test_server test_client
 
-main: $(SRC)/main.c $(SRC)/common.c $(SRC)/group.c $(SRC)/listener.c
+main: $(SRC)/main.c $(SRC)/common.c $(SRC)/group.c $(SRC)/listener.c $(SRC)/communication.c $(SRC)/node.c
 	$(CC) $(CFLAGS) -o $(BIN)/$@ $^ $(LDLIBS)
 
 test_server: $(TEST_SRC)/test_server.c $(SRC)/listener.c $(SRC)/common.c $(SRC)/communication.c $(SRC)/group.c $(SRC)/node.c

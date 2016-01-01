@@ -13,6 +13,7 @@
 #include"listener.h"
 #include"group.h"
 #include"common.h"
+#include"communication.h"
 
 int main(int argc, char *argv[]){
     int opt;
@@ -48,7 +49,10 @@ int main(int argc, char *argv[]){
     pthread_create(&tsid,NULL,&listener_run, NULL);
     sleep(1);
     pthread_create(&csid,NULL,&message_handler, NULL);
-    
+    pthread_join(csid, NULL);
+    message_t msg;
+    msg.type = 'M';
+    beb(msg);
     pthread_join(tsid, NULL);
 
     return EXIT_SUCCESS;

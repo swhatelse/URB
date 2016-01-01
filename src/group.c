@@ -39,7 +39,6 @@ void join(){
         send_sockets.nodes[i]->connexion.fd = socket(AF_INET, SOCK_STREAM,0);
         if(send_sockets.nodes[i]->connexion.fd != -1){
             if(connexion(&(send_sockets.nodes[i]->connexion)) != EXIT_FAILURE ){
-                send_sockets.nodes[i]->connexion.fd = fds[i];
                 sprintf(buf, "Connected to server %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port);
                 PRINT(buf);
             }

@@ -211,6 +211,16 @@ void* listener_run(){
         FD_SET(listening_fd, &active_set);
         
         active_set = reception_fd_set;
+
+        // Debug
+        for(int i = 0; i < receive_sockets.count; i++){
+            if(FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){
+                printf("=================== Ok ===================\n");
+            }
+            else{
+                printf("%d - %d is not here\n", i, receive_sockets.nodes[i]->connexion.fd);
+            }
+        }
        
         event = select(FD_SETSIZE, &active_set, NULL, NULL, &timeout);
         if(event == -1){

@@ -31,7 +31,7 @@ int beb(const message_t msg){
             PRINT(buf);
             //TODO ensure that all have been sent
             send(send_sockets.nodes[i]->connexion.fd, (void*) &msg, sizeof(message_t),0);
-            sleep(3);
+            sleep(10);
         }
     }
     

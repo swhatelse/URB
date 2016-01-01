@@ -11,22 +11,11 @@
  *
  *******************************************/
 
-int connection(struct sockaddr_in srv_addr){
-    int sfd;
+int connexion(connexion_t* cnx){
 
-    sfd = socket(AF_INET, SOCK_STREAM,0);
-    if(sfd < 0){
-        perror("Failed to attribute the socket");
-        return EXIT_FAILURE;
-    }
-  
-    srv_addr.sin_family = AF_INET;
-    srv_addr.sin_port = htons(port);
-    srv_addr.sin_addr.s_addr = inet_addr(addr);
-
-    if(connect(sfd, (struct sockaddr*) &srv_addr, sizeof(srv_addr)) < 0){
+    if(connect(cnx->fd, (struct sockaddr*) &(cnx->infos), sizeof(cnx->infos)) < 0){
         perror("Failed to name the socket");
-        return -1;    
+        return EXIT_FAILURE;    
     }
 
     // TODO send node id
@@ -35,9 +24,9 @@ int connection(struct sockaddr_in srv_addr){
     msg.type = 'I';
     msg.content = malloc(sizeof(int));
     msg.content = (void*)(&my_id);
-    send(sfd, &msg, sizeof(msg), 0);
+    send(cnx->fd, &msg, sizeof(msg), 0);
     
-    return sfd;
+    return EXIT_SUCCESS;
 }
 
 /** Join the group
@@ -49,9 +38,9 @@ void join(){
     fds = calloc(send_sockets.count, sizeof(int));
 
     for(int i = 0; i < send_sockets.count; i++){
-        fds[i] = socket(AF_INET, SOCK_STREAM,0);
-        if(fds[i] != -1){
-            if(connect(fds[i], (struct sockaddr*) &(send_sockets.nodes[i]->connexion.infos), sizeof(struct sockaddr_in)) != -1){
+        send_sockets.nodes[i]->connexion.fd = socket(AF_INET, SOCK_STREAM,0);
+        if(send_sockets.nodes[i]->connexion.fd != -1){
+            if(connexion(&(send_sockets.nodes[i]->connexion)) != EXIT_FAILURE ){
                 send_sockets.nodes[i]->connexion.fd = fds[i];
                 sprintf(buf, "Connected to server %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port);
                 PRINT(buf);

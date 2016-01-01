@@ -14,6 +14,17 @@ typedef struct message_t{
     void* content;
 }message_t;
 
+typedef struct message_id_t{
+    char type;
+    int node_id;
+}message_id_t;
+
+typedef struct message_ack_t{
+    char type;
+    int message_id;
+}message_ack_t;
+
+
 typedef struct message_list_t{
     message_t* msg;
     int id;

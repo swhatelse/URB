@@ -15,6 +15,6 @@ typedef struct node_t{
     int id;
 }node_t;
 
-
+int my_id;
 bool is_the_same_node(const node_t node1, const node_t node2);
 #endif

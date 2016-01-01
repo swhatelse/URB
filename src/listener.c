@@ -76,6 +76,10 @@ void handle_message(message_t* msg){
     case 'A':
         PRINT("Ack received");
         break;
+    case 'I':
+        PRINT("Node identified");
+        printf("%d\n", *((int*)(msg->content)));
+        break;
     default:
         PRINT("Unknown type");
         break;

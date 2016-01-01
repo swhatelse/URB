@@ -24,7 +24,7 @@ group_t receive_sockets;
 pthread_mutex_t receive_sockets_mtx;
 
 // Functions
-int connection(const char* addr, const int port);
+int connection(struct sockaddr_in srv_addr);
 void join();
 int add_node(const int fd, const struct sockaddr_in addr);
 void remove_node(node_t* node);

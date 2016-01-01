@@ -2,15 +2,17 @@
 
 #include"group.h"
 #include"listener.h"
+#include"node.h"
+#include"communication.h"
+
 /********************************************
  *
  *             Functions
  *
  *******************************************/
 
-int connection(const char* addr, const int port){
+int connection(struct sockaddr_in srv_addr){
     int sfd;
-    struct sockaddr_in srv_addr;
 
     sfd = socket(AF_INET, SOCK_STREAM,0);
     if(sfd < 0){
@@ -26,7 +28,15 @@ int connection(const char* addr, const int port){
         perror("Failed to name the socket");
         return -1;    
     }
-  
+
+    // TODO send node id
+    PRINT("Sending id");
+    message_t msg;
+    msg.type = 'I';
+    msg.content = malloc(sizeof(int));
+    msg.content = (void*)(&my_id);
+    send(sfd, &msg, sizeof(msg), 0);
+    
     return sfd;
 }
 

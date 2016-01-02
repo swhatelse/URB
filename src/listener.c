@@ -77,7 +77,7 @@ void handle_ack(message_t* ack){
 }
 
 void handle_normal(message_t* msg){
-    DEBUG("Message received from %d:%d:%d\n", msg->sender.connexion.infos.sin_addr.s_addr, msg->sender.connexion.infos.sin_port, msg->sender.connexion.fd);
+    DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->sender.id, inet_ntoa(msg->sender.connexion.infos.sin_addr), ntohs(msg->sender.connexion.infos.sin_port), msg->sender.connexion.fd);
     if(!is_already_in(*msg, already_received)){
         insert_message(msg, already_received);
     }
@@ -119,7 +119,7 @@ int connexion_accept(){
     /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
     connexion_pending_add(cfd, peer_addr);    
     
-    DEBUG("Client request from %d:%d:%d\n", peer_addr.sin_addr.s_addr, peer_addr.sin_port, cfd);
+    DEBUG("[?] Client request [%s:%d][%d]\n", inet_ntoa(peer_addr.sin_addr), ntohs(peer_addr.sin_port), cfd);
     
     return cfd;
 }
@@ -140,6 +140,7 @@ void handle_connexion_requests(fd_set active_set){
         if(FD_ISSET(current->connexion.fd, &active_set)){
             size = recv(current->connexion.fd, (void*)&msg, sizeof(message_id_t), 0);
             if(size > 0){
+                DEBUG("[%d] Client validation [%s:%d][%d]\n", msg.node_id, inet_ntoa(current->connexion.infos.sin_addr), ntohs(current->connexion.infos.sin_port), current->connexion.fd);
                 add_node(current->connexion, msg.node_id);
             }
             else{
@@ -154,7 +155,7 @@ void handle_connexion_requests(fd_set active_set){
 }
 
 void handle_disconnexion(int index){
-    PRINT("Deconnexion");
+    DEBUG("[%d] Deconnexion\n", receive_sockets.nodes[index]->id);
     FD_CLR(receive_sockets.nodes[index]->connexion.fd, &reception_fd_set);
     close(receive_sockets.nodes[index]->connexion.fd);
     remove_node(receive_sockets.nodes[index]);
@@ -220,7 +221,8 @@ void* listener_run(){
     FD_ZERO(&reception_fd_set);
     FD_SET(listening_fd, &reception_fd_set);
 
-    PRINT("Start to listen");
+    DEBUG("Start to listen\n");
+    DEBUG("=============================================\n");
     while(1){
         // Timeout needs to be reset each time
         timeout.tv_sec = 2;

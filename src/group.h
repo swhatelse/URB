@@ -29,4 +29,5 @@ void join();
 int add_node(const connexion_t cnx, const int node_id);
 void remove_node(node_t* node);
 void* message_handler();
+void dump_group_fd(group_t group);
 #endif

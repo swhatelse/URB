@@ -1,5 +1,4 @@
 #include"common.h"
-#include"group.h"
 
 #define NODE_COORDINATE_SIZE 32
 
@@ -24,7 +23,7 @@ int init(char *file, char *my_addr, int port){
 
     my_port = port;
 
-    PRINT("Begin of initialization");
+    DEBUG("Begin of initialization\n");
     
     pthread_mutex_init(&send_sockets_mtx, NULL);
     pthread_mutex_init(&receive_sockets_mtx, NULL);
@@ -74,5 +73,3 @@ int init(char *file, char *my_addr, int port){
 
     return EXIT_SUCCESS;
 }
-
-

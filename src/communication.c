@@ -27,14 +27,13 @@ int beb(const message_t msg){
     char buf[64];
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion.fd != -1 ){
-            sprintf(buf, "Sending a message to %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port); 
-            PRINT(buf);
+            DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
             //TODO ensure that all have been sent
             send(send_sockets.nodes[i]->connexion.fd, (void*) &msg, sizeof(message_t),0);
-            sleep(10);
+            sleep(5);
         }
     }
-    
+
     return 0;
 }
 

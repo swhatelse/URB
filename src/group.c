@@ -18,7 +18,7 @@ int connexion(connexion_t* cnx){
     }
 
     // TODO send node id
-    printf("Sending id %d\n", my_id);
+    DEBUG("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
     message_id_t msg;
     msg.type = 'I';
     msg.node_id = my_id;
@@ -32,25 +32,25 @@ int connexion(connexion_t* cnx){
  */
 void join(){
     int *fds = NULL;
-    char buf[64];
     fds = calloc(send_sockets.count, sizeof(int));
 
     for(int i = 0; i < send_sockets.count; i++){
         send_sockets.nodes[i]->connexion.fd = socket(AF_INET, SOCK_STREAM,0);
         if(send_sockets.nodes[i]->connexion.fd != -1){
             if(connexion(&(send_sockets.nodes[i]->connexion)) != EXIT_FAILURE ){
-                sprintf(buf, "Connected to server %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port);
-                PRINT(buf);
+                DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
             }
             else{
-                sprintf(buf, "Failed connect to server %d %d", send_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, send_sockets.nodes[i]->connexion.infos.sin_port);
-                PRINT(buf);
+                DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
             }
         }
         else{
             PRINT("Socket failed");
         }
     }
+
+    // Debug
+    dump_group_fd(send_sockets);
 }
 
 /** Add a node to the receiving list
@@ -61,13 +61,10 @@ void join(){
 /* int add_node(const int fd, const struct sockaddr_in addr){ */
 int add_node(const connexion_t cnx, const int node_id){
     assert(cnx.fd > 2); // To be sure the fd is valid
-    char buf[64];
     
     for(int i = 0; i < receive_sockets.count; i++){
         if(receive_sockets.nodes[i]->id == node_id){
             receive_sockets.nodes[i]->connexion = cnx;
-            sprintf(buf, "%d %d identified as %d", receive_sockets.nodes[i]->connexion.infos.sin_addr.s_addr, receive_sockets.nodes[i]->connexion.infos.sin_port, receive_sockets.nodes[i]->id);
-            PRINT(buf);
             return EXIT_SUCCESS;
         }
     }
@@ -82,4 +79,10 @@ void remove_node(node_t* node){
 void* message_handler(){
     join();
     return NULL;
+}
+
+void dump_group_fd(group_t group){
+    for(int i = 0; i < group.count; i++){
+        DEBUG("Send sockets [%s:%d][%d]\n", inet_ntoa(group.nodes[i]->connexion.infos.sin_addr), ntohs(get_node_port(group.nodes[i])), get_node_fd(group.nodes[i]));
+    }
 }

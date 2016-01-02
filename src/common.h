@@ -9,6 +9,7 @@
 #include<assert.h>
 
 #include"node.h"
+#include"group.h"
 
 #ifndef COMMON_H
 #define COMMON_H

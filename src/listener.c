@@ -218,7 +218,7 @@ void* listener_run(){
                 printf("=================== Ok ===================\n");
             }
             else{
-                printf("%d - %d is not here\n", i, receive_sockets.nodes[i]->connexion.fd);
+                DEBUG("%d - %d is not here\n", i, receive_sockets.nodes[i]->connexion.fd);
             }
         }
        
@@ -230,7 +230,7 @@ void* listener_run(){
             handle_event(active_set);
         }
         else{
-            PRINT("No event");
+            DEBUG("No event\n");
         }
     }
     return NULL;
@@ -251,8 +251,7 @@ int connexion_accept(){
     /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
     connexion_pending_add(cfd, peer_addr);    
     
-    sprintf(buf, "client from %d %d is connected", peer_addr.sin_addr.s_addr, peer_addr.sin_port);
-    PRINT(buf);
+    DEBUG("client from %d %d is connected\n", peer_addr.sin_addr.s_addr, peer_addr.sin_port);
     
     return cfd;
 }

@@ -18,8 +18,14 @@
  *               Macros
  *
  *****************************************/
-#define PRINT(string)                                 \
+#define PRINT(string)                           \
     printf("%d: %s\n" , my_port, string)
+
+#define DEBUG(fmt, ...)                                      \
+    do                                                       \
+    {                                                        \
+        fprintf(stderr, fmt, ##__VA_ARGS__);                 \
+    }while(0);
 
 /******************************************
  *

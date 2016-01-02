@@ -67,38 +67,6 @@ connexions_pending_t* connexions_pending_get(int fd){
     return NULL;
 }
 
-/** Prepare the socket for waiting connexion
- *
- */
-void listener_init(){
-    struct sockaddr_in my_addr;
-    // TODO here just for the moment
-    already_received = NULL;
-    connexions_pending = NULL;
-        
-    PRINT("Initialization of the listener");
-    
-    listening_fd = socket(AF_INET, SOCK_STREAM,0);
-    if(listening_fd < 0){
-        perror("Failed to attribute the socket\n");
-        exit(EXIT_FAILURE);
-    }
-  
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(my_port);
-    my_addr.sin_addr.s_addr = INADDR_ANY;
-
-    if(bind(listening_fd, (struct sockaddr*) &my_addr, sizeof(my_addr)) < 0 ){
-        perror("Failed to name the socket\n");
-        exit(EXIT_FAILURE);    
-    }
-
-    if(listen(listening_fd, BACKLOG) < 0){
-        perror("Failed to listen\n");
-        exit(EXIT_FAILURE);    
-    }
-}
-
 void handle_id(message_id_t* msg){
     PRINT("Node identified");
     printf("%d\n", msg->node_id);    
@@ -188,7 +156,7 @@ void handle_connexion_requests(fd_set active_set){
 void handle_disconnexion(int index){
     PRINT("Deconnexion");
     FD_CLR(receive_sockets.nodes[index]->connexion.fd, &reception_fd_set);
-    /* close(receive_sockets.nodes[index]->connexion.fd); */
+    close(receive_sockets.nodes[index]->connexion.fd);
     remove_node(receive_sockets.nodes[index]);
 }
 
@@ -210,6 +178,38 @@ void handle_event(fd_set active_set){
                 handle_disconnexion(i);
             }
         }
+    }
+}
+
+/** Prepare the socket for waiting connexion
+ *
+ */
+void listener_init(){
+    struct sockaddr_in my_addr;
+    // TODO here just for the moment
+    already_received = NULL;
+    connexions_pending = NULL;
+        
+    PRINT("Initialization of the listener");
+    
+    listening_fd = socket(AF_INET, SOCK_STREAM,0);
+    if(listening_fd < 0){
+        perror("Failed to attribute the socket\n");
+        exit(EXIT_FAILURE);
+    }
+  
+    my_addr.sin_family = AF_INET;
+    my_addr.sin_port = htons(my_port);
+    my_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if(bind(listening_fd, (struct sockaddr*) &my_addr, sizeof(my_addr)) < 0 ){
+        perror("Failed to name the socket\n");
+        exit(EXIT_FAILURE);    
+    }
+
+    if(listen(listening_fd, BACKLOG) < 0){
+        perror("Failed to listen\n");
+        exit(EXIT_FAILURE);    
     }
 }
 

@@ -109,7 +109,7 @@ void handle_ack(message_t* ack){
 }
 
 void handle_normal(message_t* msg){
-    PRINT("Message received");
+    DEBUG("Message received from %d:%d:%d\n", msg->sender.connexion.infos.sin_addr.s_addr, msg->sender.connexion.infos.sin_port, msg->sender.connexion.fd);
     if(!is_already_in(*msg, already_received)){
         insert_message(msg, already_received);
     }
@@ -136,6 +136,26 @@ void handle_message(message_t* msg){
         break;
     }
 }
+
+int connexion_accept(){
+    int cfd;
+    struct sockaddr_in peer_addr;
+    socklen_t peer_addr_size = sizeof(peer_addr);
+  
+    cfd = accept(listening_fd, (struct sockaddr*) &peer_addr, &peer_addr_size);
+    if(cfd < 0){
+        perror("Failed to accept\n");
+    }
+
+    FD_SET(cfd, &reception_fd_set);
+    /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
+    connexion_pending_add(cfd, peer_addr);    
+    
+    DEBUG("Client request from %d:%d:%d\n", peer_addr.sin_addr.s_addr, peer_addr.sin_port, cfd);
+    
+    return cfd;
+}
+
 
 void handle_connexion_requests(fd_set active_set){
     int size;
@@ -168,7 +188,7 @@ void handle_connexion_requests(fd_set active_set){
 void handle_disconnexion(int index){
     PRINT("Deconnexion");
     FD_CLR(receive_sockets.nodes[index]->connexion.fd, &reception_fd_set);
-    close(receive_sockets.nodes[index]->connexion.fd);
+    /* close(receive_sockets.nodes[index]->connexion.fd); */
     remove_node(receive_sockets.nodes[index]);
 }
 
@@ -212,16 +232,6 @@ void* listener_run(){
         
         active_set = reception_fd_set;
 
-        // Debug
-        for(int i = 0; i < receive_sockets.count; i++){
-            if(FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){
-                printf("=================== Ok ===================\n");
-            }
-            else{
-                DEBUG("%d - %d is not here\n", i, receive_sockets.nodes[i]->connexion.fd);
-            }
-        }
-       
         event = select(FD_SETSIZE, &active_set, NULL, NULL, &timeout);
         if(event == -1){
             perror("Select failed");
@@ -230,29 +240,8 @@ void* listener_run(){
             handle_event(active_set);
         }
         else{
-            DEBUG("No event\n");
+
         }
     }
     return NULL;
 }
-
-int connexion_accept(){
-    int cfd;
-    char buf[64];  // Used for debug
-    struct sockaddr_in peer_addr;
-    socklen_t peer_addr_size = sizeof(peer_addr);
-  
-    cfd = accept(listening_fd, (struct sockaddr*) &peer_addr, &peer_addr_size);
-    if(cfd < 0){
-        perror("Failed to accept\n");
-    }
-
-    FD_SET(cfd, &reception_fd_set);
-    /* fcntl(cfd, F_SETFL, O_NONBLOCK); */
-    connexion_pending_add(cfd, peer_addr);    
-    
-    DEBUG("client from %d %d is connected\n", peer_addr.sin_addr.s_addr, peer_addr.sin_port);
-    
-    return cfd;
-}
-

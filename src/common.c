@@ -2,6 +2,30 @@
 
 #define NODE_COORDINATE_SIZE 32
 
+int get_my_port(){
+    return my_port;
+}
+
+char* get_my_addr(){
+    return my_addr;
+}
+
+int get_my_id(){
+    return my_id;
+}
+
+void set_my_port(int port){
+    my_port = port;
+}
+
+void set_my_addr(char* addr){
+    my_addr = addr;
+}
+
+void set_my_id(int id){
+    my_id = id;
+}
+
 /** Initialize the structures of the group
  * @param file Name of the file containing the hosts. Host format must be in A.B.C.D:port
  */

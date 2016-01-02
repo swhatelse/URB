@@ -20,9 +20,9 @@ typedef struct node_t{
 int my_id;
 
 // Functions
-int get_node_port(node_t node);
-int get_node_addr(node_t node);
-int get_node_fd(node_t node);
+int get_node_port(node_t* node);
+int get_node_addr(node_t* node);
+int get_node_fd(node_t* node);
 
 bool is_the_same_node(const node_t node1, const node_t node2);
 #endif

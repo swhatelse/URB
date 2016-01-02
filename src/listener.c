@@ -239,6 +239,7 @@ void* listener_run(){
             perror("Select failed");
         }
         else if(event){
+            DEBUG("======================== EVENT =========================\n");
             handle_event(active_set);
         }
         else{

@@ -38,9 +38,11 @@ void join(){
         send_sockets.nodes[i]->connexion.fd = socket(AF_INET, SOCK_STREAM,0);
         if(send_sockets.nodes[i]->connexion.fd != -1){
             if(connexion(&(send_sockets.nodes[i]->connexion)) != EXIT_FAILURE ){
+                send_sockets.nodes[i]->active = true;
                 DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
             }
             else{
+                send_sockets.nodes[i]->active = false;
                 DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
             }
         }

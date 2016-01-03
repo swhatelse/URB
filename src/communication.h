@@ -22,6 +22,7 @@ typedef struct message_id_t{
 typedef struct message_ack_t{
     char type;
     int message_id;
+    int node_id;
 }message_ack_t;
 
 
@@ -41,6 +42,6 @@ bool remove_message(const int id);
 bool is_already_in(const message_t msg, message_list_t* list);
 void acknowledge(message_t msg);
 void deliver(const message_t message);
-int beb(const message_t msg);
+int beb(const void* content, size_t size);
 int urb(const message_t message);
 #endif

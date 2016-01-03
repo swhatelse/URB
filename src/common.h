@@ -42,7 +42,7 @@
 
 int running;
 int my_port;
-char* my_addr;
+struct sockaddr_in my_addr;
 
 /******************************************
  *
@@ -53,11 +53,11 @@ char* my_addr;
 int init(char *file, char *my_addr, int port);
 
 // 
-int get_my_port();
+unsigned short get_my_port();
 char* get_my_addr();
 int get_my_id();
 
-void set_my_port(int port);
+void set_my_port(unsigned short port);
 void set_my_addr(char* addr);
 void set_my_id(int id);
 #endif

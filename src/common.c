@@ -2,25 +2,26 @@
 
 #define NODE_COORDINATE_SIZE 32
 
-int get_my_port(){
-    return my_port;
+unsigned short get_my_port(){
+    return ntohs(my_addr.sin_port);
 }
 
 char* get_my_addr(){
-    return my_addr;
+    return inet_ntoa(my_addr.sin_addr);
 }
 
 int get_my_id(){
     return my_id;
 }
 
-void set_my_port(int port){
-    my_port = port;
+void set_my_port(unsigned short port){
+    my_addr.sin_port = htons((port));
 }
 
-void set_my_addr(char* addr){
-    my_addr = addr;
-}
+/* void set_my_addr(int addr){ */
+/*     my_addr.sin_addr.s_addr = ; */
+/* } */
+
 
 void set_my_id(int id){
     my_id = id;
@@ -45,7 +46,7 @@ int init(char *file, char *my_addr, int port){
     assert(port != 0);
     assert(strcmp(my_addr, "") != 0);
 
-    my_port = port;
+    set_my_port(port);
 
     DEBUG("Begin of initialization\n");
     
@@ -75,7 +76,7 @@ int init(char *file, char *my_addr, int port){
         addr = strtok(buf, &sep);
         remote_port = atoi(strtok(NULL, &sep));
         node_id = atoi( strtok(NULL, &sep) );
-        if( remote_port != my_port || strcmp(addr,my_addr) != 0){
+        if( remote_port != port || strcmp(addr,my_addr) != 0){
             // Fill the connecting sockets
             send_sockets.nodes[i] = malloc(sizeof(node_t));
             send_sockets.nodes[i]->connexion.infos.sin_family = AF_INET;
@@ -89,7 +90,7 @@ int init(char *file, char *my_addr, int port){
             i++;
         }
         else{
-            my_id = node_id;
+            set_my_id(node_id);
         }
     }
 

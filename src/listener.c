@@ -77,7 +77,7 @@ void handle_ack(message_t* ack){
 }
 
 void handle_normal(message_t* msg){
-    DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->sender.id, inet_ntoa(msg->sender.connexion.infos.sin_addr), ntohs(msg->sender.connexion.infos.sin_port), msg->sender.connexion.fd);
+    DEBUG("[%d] Message received from [%d]\n", msg->sender.id, msg->sender.connexion.fd);
     if(!is_already_in(*msg, already_received)){
         insert_message(msg, already_received);
     }
@@ -186,7 +186,6 @@ void handle_event(fd_set active_set){
  *
  */
 void listener_init(){
-    struct sockaddr_in my_addr;
     // TODO here just for the moment
     already_received = NULL;
     connexions_pending = NULL;
@@ -200,7 +199,8 @@ void listener_init(){
     }
   
     my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(my_port);
+    /* my_addr.sin_port = htons(my_port); */
+    /* set_my_port(my_port);     */
     my_addr.sin_addr.s_addr = INADDR_ANY;
 
     if(bind(listening_fd, (struct sockaddr*) &my_addr, sizeof(my_addr)) < 0 ){
@@ -239,7 +239,7 @@ void* listener_run(){
             perror("Select failed");
         }
         else if(event){
-            DEBUG("======================== EVENT =========================\n");
+            /* DEBUG("======================== EVENT =========================\n"); */
             handle_event(active_set);
         }
         else{

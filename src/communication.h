@@ -9,8 +9,9 @@
 // Type definition
 typedef struct message_t{
     char type;
-    int sequence_nb;
-    node_t sender;
+    int id; // Id of the message
+    /* node_t sender; */
+    int node_id; // Id of origin node
     void* content;
 }message_t;
 

@@ -12,6 +12,7 @@
  *
  *******************************************/
 
+int current_msg_id;
 
 /********************************************
  *
@@ -19,6 +20,9 @@
  *
  *******************************************/
 
+int generate_msg_id(){
+     return current_msg_id++;
+}
 /** Implementation of best effort broadcast.
  *  @return Number of node to which the message
  *          has been sent.
@@ -29,7 +33,8 @@ int beb(const void* content, size_t size){
     message_t msg;
     msg.type = 'M';
     msg.content = NULL;
-    msg.sender.id = my_id;
+    msg.node_id = my_id;
+    msg.id = generate_msg_id();
     
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion.fd != -1 && send_sockets.nodes[i]->active){
@@ -59,11 +64,15 @@ bool is_already_in(message_t msg, message_list_t* list){
     }
     
     while(current != NULL){
-        if (is_the_same_node(msg.sender, current->msg->sender)){
-            if(current->msg->sequence_nb == msg.sequence_nb){
-                return true;
-            }
-        }
+        /* if (is_the_same_node(msg.sender, current->msg->sender)){ */
+        /*     if(current->msg->sequence_nb == msg.sequence_nb){ */
+        /*         return true; */
+        /*     } */
+        /* } */
+
+         if(msg.node_id == current->msg->node_id && msg.id == current->msg->id){
+              return true;
+         }
         current = current->next;
     }
     

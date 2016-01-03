@@ -1,15 +1,15 @@
 #include"node.h"
 
 int get_node_port(node_t* node){
-    return node->connexion.infos.sin_port;
+    return node->connexion->infos.sin_port;
 }
 
 int get_node_addr(node_t* node){
-   return node->connexion.infos.sin_addr.s_addr;
+   return node->connexion->infos.sin_addr.s_addr;
 }
 
 int get_node_fd(node_t* node){
-   return node->connexion.fd;
+   return node->connexion->fd;
 }
 
 

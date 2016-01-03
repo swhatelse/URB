@@ -35,8 +35,9 @@ connexions_pending_t* connexions_pending;
  */
 void connexion_pending_add(int fd, struct sockaddr_in addr){
     connexions_pending_t* new = malloc(sizeof(connexions_pending_t));
-    new->connexion.fd = fd;
-    new->connexion.infos = addr;
+    new->connexion = malloc(sizeof(connexion_t));
+    new->connexion->fd = fd;
+    new->connexion->infos = addr;
     new->next = NULL;
     
     if(!connexions_pending){
@@ -53,23 +54,40 @@ void connexion_pending_add(int fd, struct sockaddr_in addr){
     }
 }
 
-void connexion_pending_remove(connexions_pending_t* cnx){
-     if(cnx->prev){
-          cnx->prev->next = cnx->next;
-     }
-     if(cnx->next){
-          cnx->next->prev = cnx->prev;
-     }
+/** Extract a connexion from the pending list.
+ *
+ */
+connexion_t* connexion_pending_pop(connexions_pending_t* cnx_pnd){
+    connexion_t* cnx;
+    if(cnx_pnd->prev){
+        cnx_pnd->prev->next = cnx_pnd->next;
+    }
+    else{
+        connexions_pending = cnx_pnd->next;
+    }
+    
+    if(cnx_pnd->next){
+        cnx_pnd->next->prev = cnx_pnd->prev;
+    }
 
-     /* free(cnx->connexion); */
-     free(cnx);
-     cnx = NULL;
+    cnx = cnx_pnd->connexion;
+     
+    free(cnx_pnd);
+    cnx_pnd = NULL;
+    
+    return cnx;
+}
+
+void connexion_pending_remove(connexions_pending_t* cnx_pnd){
+    connexion_t* cnx =  connexion_pending_pop(cnx_pnd);
+    free(cnx);
+    cnx = NULL;
 }
 
 connexions_pending_t* connexions_pending_get(int fd){
     connexions_pending_t* current = connexions_pending;
     while(current != NULL){
-        if(current->connexion.fd == fd){
+        if(current->connexion->fd == fd){
             return current;
         }
         current = current->next;
@@ -87,7 +105,7 @@ void handle_ack(message_t* ack, node_t* sender){
 }
 
 void handle_normal(message_t* msg, node_t* sender){
-     DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion.infos.sin_addr), ntohs(sender->connexion.infos.sin_port), sender->connexion.fd);
+     DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
      if(!is_already_in(*msg, already_received)){
           insert_message(msg, already_received);
      }
@@ -151,18 +169,21 @@ void handle_connexion_requests(fd_set active_set){
     
      // Accept pending connexion
      while(current != NULL){
-          if(FD_ISSET(current->connexion.fd, &active_set)){
-               size = recv(current->connexion.fd, (void*)&msg, sizeof(message_id_t), 0);
+         if(current->connexion && FD_ISSET(current->connexion->fd, &active_set)){
+               size = recv(current->connexion->fd, (void*)&msg, sizeof(message_id_t), 0);
                if(size > 0){
-                    DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(current->connexion.infos.sin_addr), ntohs(current->connexion.infos.sin_port), current->connexion.fd);
-                    add_node(current->connexion, msg.node_id);
+                    DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(current->connexion->infos.sin_addr), ntohs(current->connexion->infos.sin_port), current->connexion->fd);
+                    /* add_node(current->connexion, msg.node_id); */
+                    add_node(connexion_pending_pop(current), msg.node_id);
                }
                else{
                     // Disconnection
-                    DEBUG("[?] Client validation aborted [%s:%d][%d]\n", inet_ntoa(current->connexion.infos.sin_addr), ntohs(current->connexion.infos.sin_port), current->connexion.fd);
-                    FD_CLR(current->connexion.fd, &reception_fd_set);
-                    close(current->connexion.fd);
-                    connexion_pending_remove(current);
+                   if(current->connexion){
+                       DEBUG("[?] Client validation aborted [%s:%d][%d]\n", inet_ntoa(current->connexion->infos.sin_addr), ntohs(current->connexion->infos.sin_port), current->connexion->fd);
+                       FD_CLR(current->connexion->fd, &reception_fd_set);
+                       close(current->connexion->fd);
+                       connexion_pending_remove(current);
+                   }
                }
           }
           current = current->next;
@@ -170,29 +191,35 @@ void handle_connexion_requests(fd_set active_set){
 }
 
 void handle_disconnexion(int index){
-     DEBUG("[%d] Deconnexion\n", receive_sockets.nodes[index]->id);
-     FD_CLR(receive_sockets.nodes[index]->connexion.fd, &reception_fd_set);
-     close(receive_sockets.nodes[index]->connexion.fd);
-     remove_node(receive_sockets.nodes[index]);
+    if(receive_sockets.nodes[index]->connexion){
+        DEBUG("[%d] Deconnexion\n", receive_sockets.nodes[index]->id);
+        FD_CLR(receive_sockets.nodes[index]->connexion->fd, &reception_fd_set);
+        close(receive_sockets.nodes[index]->connexion->fd);
+        free(receive_sockets.nodes[index]->connexion);
+        receive_sockets.nodes[index]->connexion = NULL;
+        // Not sure it is need
+        /* remove_node(receive_sockets.nodes[index]); */
+    }
 }
 
 void handle_event(fd_set active_set){
     handle_connexion_requests(active_set);
 
     for(int i = 0; i < receive_sockets.count; i++){
-        if(receive_sockets.nodes[i] != NULL &&
-           FD_ISSET(receive_sockets.nodes[i]->connexion.fd, &active_set)){
-             message_t *msg = malloc(sizeof(message_t));
-             int size = 0;
-             // The size of message_t is used here because it is the longuest we can receive.
-             size = recv(receive_sockets.nodes[i]->connexion.fd, (void*)msg, sizeof(message_t), 0);
-             if(size > 0){
-                  handle_message(msg, receive_sockets.nodes[i]);
-             }
-             else{
-                  free(msg);
-                  handle_disconnexion(i);
-             }
+        if(receive_sockets.nodes[i] != NULL && receive_sockets.nodes[i]->connexion != NULL){
+            if(FD_ISSET(receive_sockets.nodes[i]->connexion->fd, &active_set)){
+                message_t *msg = malloc(sizeof(message_t));
+                int size = 0;
+                // The size of message_t is used here because it is the longuest we can receive.
+                size = recv(receive_sockets.nodes[i]->connexion->fd, (void*)msg, sizeof(message_t), 0);
+                if(size > 0){
+                    handle_message(msg, receive_sockets.nodes[i]);
+                }
+                else{
+                    free(msg);
+                    handle_disconnexion(i);
+                }
+            }
         }
     }
 }

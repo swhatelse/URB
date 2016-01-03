@@ -14,7 +14,7 @@
 
 // Types
 typedef struct connexions_pending_t{
-    connexion_t connexion;
+    connexion_t* connexion;
     struct connexions_pending_t* prev;
     struct connexions_pending_t* next;
 }connexions_pending_t;

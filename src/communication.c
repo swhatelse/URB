@@ -37,12 +37,12 @@ int beb(const void* content, size_t size){
     msg.id = generate_msg_id();
     
     for(int i = 0; i < send_sockets.count; i++){
-        if(send_sockets.nodes[i]->connexion.fd != -1 && send_sockets.nodes[i]->active){
-            DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
+        if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
+            DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
             //TODO ensure that all have been sent
-            /* retval = send(send_sockets.nodes[i]->connexion.fd, (void*) &msg, sizeof(message_t),0); */
-            /* retval = send(send_sockets.nodes[i]->connexion.fd, (void*) &message, sizeof(message_t),0); */
-            retval = send(send_sockets.nodes[i]->connexion.fd, (void*) &msg, sizeof(message_t),0);
+            /* retval = send(send_sockets.nodes[i]->connexion->fd, (void*) &msg, sizeof(message_t),0); */
+            /* retval = send(send_sockets.nodes[i]->connexion->fd, (void*) &message, sizeof(message_t),0); */
+            retval = send(send_sockets.nodes[i]->connexion->fd, (void*) &msg, sizeof(message_t),0);
             sleep(5);
         }
     }

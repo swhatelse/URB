@@ -12,7 +12,7 @@ typedef struct connexion_t{
 
 
 typedef struct node_t{
-    connexion_t connexion;
+    connexion_t* connexion;
     int id;
     bool active;
 }node_t;

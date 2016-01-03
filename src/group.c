@@ -35,15 +35,15 @@ void join(){
     fds = calloc(send_sockets.count, sizeof(int));
 
     for(int i = 0; i < send_sockets.count; i++){
-        send_sockets.nodes[i]->connexion.fd = socket(AF_INET, SOCK_STREAM,0);
-        if(send_sockets.nodes[i]->connexion.fd != -1){
-            if(connexion(&(send_sockets.nodes[i]->connexion)) != EXIT_FAILURE ){
+        send_sockets.nodes[i]->connexion->fd = socket(AF_INET, SOCK_STREAM,0);
+        if(send_sockets.nodes[i]->connexion->fd != -1){
+            if(connexion(send_sockets.nodes[i]->connexion) != EXIT_FAILURE ){
                 send_sockets.nodes[i]->active = true;
-                DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
+                DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
             }
             else{
                 send_sockets.nodes[i]->active = false;
-                DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion.infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion.infos.sin_port), send_sockets.nodes[i]->connexion.fd);
+                DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
             }
         }
         else{
@@ -61,8 +61,8 @@ void join(){
  * @return 0 if ok 1 if fails
  */
 /* int add_node(const int fd, const struct sockaddr_in addr){ */
-int add_node(const connexion_t cnx, const int node_id){
-    assert(cnx.fd > 2); // To be sure the fd is valid
+int add_node(connexion_t* cnx, const int node_id){
+    assert(cnx->fd > 2); // To be sure the fd is valid
     
     for(int i = 0; i < receive_sockets.count; i++){
         if(receive_sockets.nodes[i]->id == node_id){
@@ -85,6 +85,6 @@ void* message_handler(){
 
 void dump_group_fd(group_t group){
     for(int i = 0; i < group.count; i++){
-        DEBUG("Send sockets [%s:%d][%d]\n", inet_ntoa(group.nodes[i]->connexion.infos.sin_addr), ntohs(get_node_port(group.nodes[i])), get_node_fd(group.nodes[i]));
+        DEBUG("Send sockets [%s:%d][%d]\n", inet_ntoa(group.nodes[i]->connexion->infos.sin_addr), ntohs(get_node_port(group.nodes[i])), get_node_fd(group.nodes[i]));
     }
 }

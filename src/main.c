@@ -50,9 +50,11 @@ int main(int argc, char *argv[]){
     sleep(1);
     pthread_create(&csid,NULL,&message_handler, NULL);
     pthread_join(csid, NULL);
-    message_t msg;
-    msg.type = 'M';
-    beb(msg);
+
+    /* message_t msg; */
+    /* msg.type = 'M'; */
+    /* beb(msg); */
+
     pthread_join(tsid, NULL);
 
     return EXIT_SUCCESS;

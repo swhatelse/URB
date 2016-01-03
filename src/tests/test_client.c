@@ -31,9 +31,13 @@ int main(int argc, char** argv){
     init(config, "127.0.0.1", port);
     join();
 
-    message_t msg;
-    msg.type = 'M';
-    msg.content = NULL;
-    beb(msg);
+    /* message_t msg; */
+    /* msg.type = 'M'; */
+    /* msg.content = NULL; */
+
+    char msg[] = "test";
+    
+    beb((void*)msg, sizeof(msg));
+
     return EXIT_SUCCESS;
 }

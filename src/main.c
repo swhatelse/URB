@@ -51,10 +51,10 @@ int main(int argc, char *argv[]){
     pthread_create(&csid,NULL,&message_handler, NULL);
     pthread_join(csid, NULL);
 
-    /* message_t msg; */
-    /* msg.type = 'M'; */
-    /* beb(msg); */
-
+    char msg[] = "test";
+    
+    beb((void*)msg, sizeof(msg));
+    
     pthread_join(tsid, NULL);
 
     return EXIT_SUCCESS;

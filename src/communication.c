@@ -30,19 +30,21 @@ int generate_msg_id(){
 int beb(const void* content, size_t size){
     int retval;
 
-    message_t msg;
-    msg.type = 'M';
-    msg.content = NULL;
-    msg.node_id = my_id;
-    msg.id = generate_msg_id();
+    message_t* msg = malloc(sizeof(message_t));
+    msg->type = 'M';
+    msg->content = NULL;
+    msg->node_id = my_id;
+    /* msg.id = generate_msg_id(); */
+    msg->id = 1;
+
+    // Send to my self
+    insert_message(msg, &already_received);
     
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
             DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
             //TODO ensure that all have been sent
-            /* retval = send(send_sockets.nodes[i]->connexion->fd, (void*) &msg, sizeof(message_t),0); */
-            /* retval = send(send_sockets.nodes[i]->connexion->fd, (void*) &message, sizeof(message_t),0); */
-            retval = send(send_sockets.nodes[i]->connexion->fd, (void*) &msg, sizeof(message_t),0);
+            retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, sizeof(message_t),0);
             sleep(5);
         }
     }
@@ -79,20 +81,35 @@ bool is_already_in(message_t msg, message_list_t* list){
     return false;
 }
 
+/** Tags the nodes from which we have received an ack
+ * 
+ */
+void add_ack(bool** acks, int node_id){
+    assert((*acks)[node_id - 1] == false);
+    (*acks)[node_id - 1] = true;
+}
+
 /** Add the message msg of the sender sender in the already_received list
  *
  */
-void insert_message(message_t* msg, message_list_t* list){
-    message_list_t* current = list;
+void insert_message(message_t* msg, message_list_t** list){
+    message_list_t* current = *list;
 
     message_list_t* new_msg = malloc(sizeof(message_list_t));
     new_msg->msg = msg;
+
+    // Initialize acks
+    new_msg->acks = malloc(sizeof(int) * receive_sockets.count + 1);
+    for(int i = 0; i  < receive_sockets.count + 1; i++){
+        new_msg->acks[i] = false;
+    }
+    add_ack(&(new_msg->acks), msg->node_id);
     new_msg->next = NULL;
     
     if(current == NULL){
         new_msg->prev = NULL;
-        new_msg->id = 0;
-        list = new_msg;
+        /* new_msg->id = msg->id; */
+        *list = new_msg;
     }
     else{
         while(current->next != NULL){
@@ -100,7 +117,7 @@ void insert_message(message_t* msg, message_list_t* list){
         }
         current->next = new_msg;
         new_msg->prev = current;
-        new_msg->id = current->id + 1;
+        /* new_msg->id = current->id + 1; */
     }
 }
 
@@ -108,12 +125,12 @@ void insert_message(message_t* msg, message_list_t* list){
  * @param id Message identifier
  * @return true if the message has been removed otherwise false
  */
-bool remove_message(const int id){
+bool remove_message(const int id, const int node_id){
     message_list_t* current = already_received;
     bool found = false;
 
     while(current != NULL || !found){
-        if(current->id != id){
+        if(current->msg->id == id && current->msg->node_id == node_id){
             current->prev->next = current->next;
             current->next->prev = current->prev;
             free(current);

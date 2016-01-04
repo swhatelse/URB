@@ -26,10 +26,11 @@ typedef struct message_ack_t{
     int node_id;
 }message_ack_t;
 
-
 typedef struct message_list_t{
     message_t* msg;
-    int id;
+    /* int id; */
+    bool* acks;
+    /* int count_ack; */
     struct message_list_t* prev;
     struct message_list_t* next;
 }message_list_t;
@@ -38,10 +39,11 @@ typedef struct message_list_t{
 message_list_t *already_received;
 
 // Functions
-void insert_message(message_t* msg, message_list_t* list);
-bool remove_message(const int id);
+void insert_message(message_t* msg, message_list_t** list);
+bool remove_message(const int id, const int node_id);
 bool is_already_in(const message_t msg, message_list_t* list);
 void acknowledge(message_t msg);
+void add_ack(bool** acks, int node_id);
 void deliver(const message_t message);
 int beb(const void* content, size_t size);
 int urb(const message_t message);

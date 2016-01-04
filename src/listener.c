@@ -107,12 +107,13 @@ void handle_ack(message_t* ack, node_t* sender){
 void handle_normal(message_t* msg, node_t* sender){
      DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
      if(!is_already_in(*msg, already_received)){
-          insert_message(msg, already_received);
+         insert_message(msg, &already_received);
      }
      else{
           // Message already received, we can drop it
-          free(msg);
-          msg = NULL;
+         /* DEBUG("\x1b[31m ========= ALREADY RECEIVED =========== \x1b[0m\n"); */
+         free(msg);
+         msg = NULL;
      }
 }
 

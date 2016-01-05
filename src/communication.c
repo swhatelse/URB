@@ -20,9 +20,24 @@ int current_msg_id;
  *
  *******************************************/
 
+/** Generate unique id to attach to the message
+ *
+ */
 int generate_msg_id(){
      return current_msg_id++;
 }
+
+int multicast(const void* msg, size_t size){
+    int retval;
+    for(int i = 0; i < send_sockets.count; i++){
+        if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
+            DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+            //TODO ensure that all have been sent
+            retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, size,0);
+        }
+    }
+}
+
 /** Implementation of best effort broadcast.
  *  @return Number of node to which the message
  *          has been sent.
@@ -40,14 +55,15 @@ int beb(const void* content, size_t size){
     // Send to my self
     insert_message(msg, &already_received);
     
-    for(int i = 0; i < send_sockets.count; i++){
-        if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
-            DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
-            //TODO ensure that all have been sent
-            retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, sizeof(message_t),0);
-            sleep(5);
-        }
-    }
+    /* for(int i = 0; i < send_sockets.count; i++){ */
+    /*     if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){ */
+    /*         DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd); */
+    /*         //TODO ensure that all have been sent */
+    /*         retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, sizeof(message_t),0); */
+    /*         sleep(5); */
+    /*     } */
+    /* } */
+    multicast((void*)msg, sizeof(message_t));
 
     return 0;
 }
@@ -79,6 +95,15 @@ bool is_already_in(message_t msg, message_list_t* list){
     }
     
     return false;
+}
+
+void acknowledge(message_t msg){
+    message_ack_t* ack = malloc(sizeof(message_ack_t));
+    ack->type = 'A';
+    ack->message_id = msg.id ;
+    ack->node_id = msg.node_id;
+
+    multicast(&ack, sizeof(ack));
 }
 
 /** Tags the nodes from which we have received an ack

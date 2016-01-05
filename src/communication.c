@@ -130,7 +130,12 @@ void insert_message(message_t* msg, message_list_t** list){
     for(int i = 0; i  < receive_sockets.count + 1; i++){
         new_msg->acks[i] = false;
     }
+    
+    // The message is taken it count as in ack of itself.
+    // This way the sender doesn't need to ack its message.
     add_ack(&(new_msg->acks), msg->node_id);
+    DEBUG_VALID("[%d] Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
+    
     new_msg->next = NULL;
     
     if(current == NULL){

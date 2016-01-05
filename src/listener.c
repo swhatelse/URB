@@ -101,7 +101,7 @@ void handle_id(message_id_t* msg){
 }
 
 void handle_ack(message_t* ack, node_t* sender){
-    DEBUG_VALID("[%d]Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
+    DEBUG_VALID("[%d] Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
 }
 
 void handle_normal(message_t* msg, node_t* sender){
@@ -109,6 +109,7 @@ void handle_normal(message_t* msg, node_t* sender){
      // Message have not received yet
      if(!is_already_in(*msg, already_received)){
          insert_message(msg, &already_received);
+         // Send ack on new message
          acknowledge(*msg);
      }
      // Message already received

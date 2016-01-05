@@ -12,6 +12,12 @@
  *******************************************/
 
 int connexion(connexion_t* cnx){
+    cnx->fd = socket(AF_INET, SOCK_STREAM,0);
+    if(cnx->fd == -1){
+        perror("Failed to create the socket");
+        return EXIT_FAILURE;    
+    }
+    
     if(connect(cnx->fd, (struct sockaddr*) &(cnx->infos), sizeof(cnx->infos)) < 0){
         perror("Failed to name the socket");
         return EXIT_FAILURE;    
@@ -49,22 +55,22 @@ void join(){
     fds = calloc(send_sockets.count, sizeof(int));
 
     for(int i = 0; i < send_sockets.count; i++){
-        send_sockets.nodes[i]->connexion->fd = socket(AF_INET, SOCK_STREAM,0);
-        if(send_sockets.nodes[i]->connexion->fd != -1){
-            if(connexion(send_sockets.nodes[i]->connexion) != EXIT_FAILURE ){
-                send_sockets.nodes[i]->active = true;
-                DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
-            }
-            else{
-                send_sockets.nodes[i]->active = false;
-                DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
-            }
+        /* send_sockets.nodes[i]->connexion->fd = socket(AF_INET, SOCK_STREAM,0); */
+        /* if(send_sockets.nodes[i]->connexion->fd != -1){ */
+        if(connexion(send_sockets.nodes[i]->connexion) != EXIT_FAILURE ){
+            send_sockets.nodes[i]->active = true;
+            DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
         }
         else{
-            PRINT("Socket failed");
+            send_sockets.nodes[i]->active = false;
+            DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
         }
+        /* } */
+        /* else{ */
+        /*     PRINT("Socket failed"); */
+        /* } */
     }
-
+    
     // Debug
     dump_group_fd(send_sockets);
 }

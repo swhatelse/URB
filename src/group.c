@@ -27,6 +27,20 @@ int connexion(connexion_t* cnx){
     return EXIT_SUCCESS;
 }
 
+bool is_node_active(group_t* group, int node_id){
+    /* return  group->nodes[node_id - 1]->active; */
+    return get_node_by_id(group, node_id)->active;
+}
+
+node_t* get_node_by_id(group_t* group, int node_id){
+    for(int i = 0; i < group->count; i++){
+        if(group->nodes[i]->id == node_id){
+            return group->nodes[i];
+        }
+    }
+    return NULL;
+}
+
 /** Join the group
  *
  */

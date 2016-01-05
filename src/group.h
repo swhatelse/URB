@@ -25,6 +25,8 @@ pthread_mutex_t receive_sockets_mtx;
 
 // Functions
 int connexion(connexion_t* cnx);
+bool is_node_active(group_t* group, int node_id);
+node_t* get_node_by_id(group_t* group, int node_id);
 void join();
 int add_node(connexion_t* cnx, const int node_id);
 void remove_node(node_t* node);

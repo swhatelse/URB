@@ -84,6 +84,7 @@ int init(char *file, char *my_addr, int port){
             send_sockets.nodes[i]->connexion->infos.sin_port = htons(remote_port);
             send_sockets.nodes[i]->connexion->infos.sin_addr.s_addr = inet_addr(addr);
             send_sockets.nodes[i]->id = node_id;
+            send_sockets.nodes[i]->active = false;
 
             // Pre-fill the listening sockets
             receive_sockets.nodes[i] = malloc(sizeof(node_t));

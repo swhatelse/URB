@@ -101,14 +101,17 @@ void handle_id(message_id_t* msg){
 }
 
 void handle_ack(message_t* ack, node_t* sender){
-    PRINT("Ack received");
+    DEBUG("\x1B[32m[%d] Ack [%d][%d]\x1b[0m\n", sender->id, ack->node_id, ack->id);
 }
 
 void handle_normal(message_t* msg, node_t* sender){
      DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
+     // Message have not received yet
      if(!is_already_in(*msg, already_received)){
          insert_message(msg, &already_received);
+         acknowledge(*msg);
      }
+     // Message already received
      else{
           // Message already received, we can drop it
          /* DEBUG("\x1b[31m ========= ALREADY RECEIVED =========== \x1b[0m\n"); */
@@ -123,12 +126,10 @@ void handle_message(message_t* msg, node_t* sender){
          handle_normal(msg, sender);
         break;
     case 'A':
-         handle_ack(msg, sender);
-        break;
-    /* case 'I': */
-    /*      handle_id((message_id_t*)msg, sender); */
+        handle_ack((message_t*)msg, sender);
         break;
     default:
+        /* handle_ack((message_ack_t*)msg, sender); */
         PRINT("Unknown type");
         break;
     }
@@ -176,6 +177,13 @@ void handle_connexion_requests(fd_set active_set){
                     DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(current->connexion->infos.sin_addr), ntohs(current->connexion->infos.sin_port), current->connexion->fd);
                     /* add_node(current->connexion, msg.node_id); */
                     add_node(connexion_pending_pop(current), msg.node_id);
+                    // If the sending connexion is not establish, establishes it
+                    if(!is_node_active(&send_sockets, msg.node_id)){
+                        DEBUG("================ Rejoin =====================\n");
+                        node_t* node = get_node_by_id(&send_sockets, msg.node_id); 
+                        connexion(node->connexion);
+                        node->active = true;
+                    }
                }
                else{
                     // Disconnection

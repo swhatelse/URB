@@ -74,6 +74,7 @@ int beb(const void* content, size_t size){
  * @param the list from which to search
  * @return true or false
  */
+// TODO modify it to return the msg or null
 bool is_already_in(message_t msg, message_list_t* list){
     message_list_t* current = list;
 
@@ -98,12 +99,13 @@ bool is_already_in(message_t msg, message_list_t* list){
 }
 
 void acknowledge(message_t msg){
-    message_ack_t* ack = malloc(sizeof(message_ack_t));
+    message_t* ack = malloc(sizeof(message_t));
     ack->type = 'A';
-    ack->message_id = msg.id ;
+    ack->id = msg.id ;
     ack->node_id = msg.node_id;
-
-    multicast(&ack, sizeof(ack));
+    ack->content = NULL;
+    
+    multicast(ack, sizeof(message_t));
 }
 
 /** Tags the nodes from which we have received an ack

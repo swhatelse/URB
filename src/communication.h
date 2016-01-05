@@ -15,6 +15,7 @@ typedef struct message_t{
     void* content;
 }message_t;
 
+// Used to authenticate a node
 typedef struct message_id_t{
     char type;
     int node_id;

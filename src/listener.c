@@ -101,7 +101,7 @@ void handle_id(message_id_t* msg){
 }
 
 void handle_ack(message_t* ack, node_t* sender){
-    DEBUG("\x1B[32m[%d] Ack [%d][%d]\x1b[0m\n", sender->id, ack->node_id, ack->id);
+    DEBUG_VALID("[%d]Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
 }
 
 void handle_normal(message_t* msg, node_t* sender){
@@ -114,7 +114,6 @@ void handle_normal(message_t* msg, node_t* sender){
      // Message already received
      else{
           // Message already received, we can drop it
-         /* DEBUG("\x1b[31m ========= ALREADY RECEIVED =========== \x1b[0m\n"); */
          free(msg);
          msg = NULL;
      }

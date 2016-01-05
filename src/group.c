@@ -63,7 +63,7 @@ void join(){
         }
         else{
             send_sockets.nodes[i]->active = false;
-            DEBUG("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+            DEBUG_ERR("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
         }
         /* } */
         /* else{ */

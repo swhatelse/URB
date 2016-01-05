@@ -27,11 +27,11 @@ int generate_msg_id(){
      return current_msg_id++;
 }
 
-int multicast(const void* msg, size_t size){
+int multicast(const message_t* msg, size_t size){
     int retval;
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
-            DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+            DEBUG("Sending [%d][%d] to [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
             //TODO ensure that all have been sent
             retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, size,0);
         }
@@ -63,7 +63,7 @@ int beb(const void* content, size_t size){
     /*         sleep(5); */
     /*     } */
     /* } */
-    multicast((void*)msg, sizeof(message_t));
+    multicast(msg, sizeof(message_t));
 
     return 0;
 }

@@ -49,6 +49,8 @@ int init(char *file, char *my_addr, int port){
     set_my_port(port);
 
     DEBUG("Begin of initialization\n");
+    DEBUG("Address : %s\n", my_addr);
+    DEBUG("Listening port : %d\n", port);
     
     pthread_mutex_init(&send_sockets_mtx, NULL);
     pthread_mutex_init(&receive_sockets_mtx, NULL);
@@ -92,6 +94,7 @@ int init(char *file, char *my_addr, int port){
             i++;
         }
         else{
+            DEBUG("Node id : %d\n", node_id);
             set_my_id(node_id);
         }
     }

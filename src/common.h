@@ -19,13 +19,29 @@
  *               Macros
  *
  *****************************************/
+#define RED "\e[31m"
+#define GREEN "\e[32m"
+#define RESET "\e[m"
+
 #define PRINT(string)                           \
     printf("%d: %s\n" , my_port, string)
 
-#define DEBUG(fmt, ...)                                      \
-    do                                                       \
-    {                                                        \
-        fprintf(stderr, fmt, ##__VA_ARGS__);                 \
+#define DEBUG_ERR(fmt, ...)                                                    \
+    do                                                                  \
+    {                                                                   \
+    fprintf(stderr, RED fmt RESET , ##__VA_ARGS__);                     \
+    }while(0);
+
+#define DEBUG_VALID(fmt, ...)                                                  \
+    do                                                                  \
+    {                                                                   \
+    fprintf(stderr, GREEN fmt RESET , ##__VA_ARGS__);                   \
+    }while(0);
+
+#define DEBUG(fmt, ...)                                                 \
+    do                                                                  \
+    {                                                                   \
+        fprintf(stderr, fmt, ##__VA_ARGS__);                            \
     }while(0);
 
 /******************************************

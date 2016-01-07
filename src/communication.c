@@ -78,17 +78,12 @@ int beb(const void* content, size_t size){
 bool is_already_in(const int msg_id, const int node_id, message_list_t* list){
     message_list_t* current = list;
 
+    // The list is empty.
     if(!list){
         return false;
     }
     
     while(current != NULL){
-        /* if (is_the_same_node(msg.sender, current->msg->sender)){ */
-        /*     if(current->msg->sequence_nb == msg.sequence_nb){ */
-        /*         return true; */
-        /*     } */
-        /* } */
-
          if(node_id == current->msg->node_id && msg_id == current->msg->id){
               return true;
          }

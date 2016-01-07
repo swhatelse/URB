@@ -20,7 +20,7 @@
  *             Global vars
  *
  *******************************************/
-connexions_pending_t* connexions_pending;
+dlk_list_t connexions_pending;
 /********************************************
  *
  *             Functions
@@ -34,60 +34,41 @@ connexions_pending_t* connexions_pending;
  * @param addr Address informations of the incomming connexion.
  */
 void connexion_pending_add(int fd, struct sockaddr_in addr){
-    connexions_pending_t* new = malloc(sizeof(connexions_pending_t));
-    new->connexion = malloc(sizeof(connexion_t));
-    new->connexion->fd = fd;
-    new->connexion->infos = addr;
-    new->next = NULL;
-    
-    if(!connexions_pending){
-        new->prev = NULL;
-        connexions_pending = new;
-    }
-    else{
-        connexions_pending_t* current = connexions_pending;
-        while(current->next != NULL){
-            current = current->next;
-        }
-        new->prev = current;
-        current->next = new;
-    }
+    dlk_element_t* pending = malloc(sizeof(dlk_element_t));
+    connexion_t* cnx = malloc(sizeof(connexion_t));
+ 
+    cnx->fd = fd;
+    cnx->infos = addr;
+
+    pending->data = (void*)cnx;
+
+    dlk_list_append(&connexions_pending, pending);
 }
 
 /** Extract a connexion from the pending list.
  *
  */
-connexion_t* connexion_pending_pop(connexions_pending_t* cnx_pnd){
+connexion_t* connexion_pending_pop(dlk_element_t* cnx_pnd){
     connexion_t* cnx;
-    if(cnx_pnd->prev){
-        cnx_pnd->prev->next = cnx_pnd->next;
-    }
-    else{
-        connexions_pending = cnx_pnd->next;
-    }
-    
-    if(cnx_pnd->next){
-        cnx_pnd->next->prev = cnx_pnd->prev;
-    }
+    dlk_list_remove(&connexions_pending, cnx_pnd);
 
-    cnx = cnx_pnd->connexion;
-     
-    free(cnx_pnd);
-    cnx_pnd = NULL;
-    
+    cnx = (connexion_t*)cnx_pnd->data;
     return cnx;
 }
 
-void connexion_pending_remove(connexions_pending_t* cnx_pnd){
+/** Pop and destroy the connexion
+ *
+ */
+void connexion_pending_remove(dlk_element_t* cnx_pnd){
     connexion_t* cnx =  connexion_pending_pop(cnx_pnd);
     free(cnx);
     cnx = NULL;
 }
 
-connexions_pending_t* connexions_pending_get(int fd){
-    connexions_pending_t* current = connexions_pending;
+dlk_element_t* connexions_pending_get(int fd){
+    dlk_element_t* current = connexions_pending.tail;
     while(current != NULL){
-        if(current->connexion->fd == fd){
+        if(((connexion_t*)(current->data))->fd == fd){
             return current;
         }
         current = current->next;
@@ -178,15 +159,15 @@ void handle_connexion_requests(fd_set active_set){
           connexion_accept();
      }
 
-     connexions_pending_t* current = connexions_pending;
+     dlk_element_t* current = connexions_pending.tail;
     
      // Accept pending connexion
      while(current != NULL){
-         if(current->connexion && FD_ISSET(current->connexion->fd, &active_set)){
-               size = recv(current->connexion->fd, (void*)&msg, sizeof(message_id_t), 0);
+         if(((connexion_t*)(current->data)) && FD_ISSET(((connexion_t*)(current->data))->fd, &active_set)){
+               size = recv(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t), 0);
                if(size > 0){
-                    DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(current->connexion->infos.sin_addr), ntohs(current->connexion->infos.sin_port), current->connexion->fd);
-                    /* add_node(current->connexion, msg.node_id); */
+                    DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
+                    /* add_node(((connexion_t*)(current->data)), msg.node_id); */
                     add_node(connexion_pending_pop(current), msg.node_id);
                     // If the sending connexion is not establish, establishes it
                     if(!is_node_active(&send_sockets, msg.node_id)){
@@ -198,10 +179,10 @@ void handle_connexion_requests(fd_set active_set){
                }
                else{
                     // Disconnection
-                   if(current->connexion){
-                       DEBUG("[?] Client validation aborted [%s:%d][%d]\n", inet_ntoa(current->connexion->infos.sin_addr), ntohs(current->connexion->infos.sin_port), current->connexion->fd);
-                       FD_CLR(current->connexion->fd, &reception_fd_set);
-                       close(current->connexion->fd);
+                   if(((connexion_t*)(current->data))){
+                       DEBUG("[?] Client validation aborted [%s:%d][%d]\n", inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
+                       FD_CLR(((connexion_t*)(current->data))->fd, &reception_fd_set);
+                       close(((connexion_t*)(current->data))->fd);
                        connexion_pending_remove(current);
                    }
                }
@@ -250,7 +231,7 @@ void handle_event(fd_set active_set){
 void listener_init(){
     // TODO here just for the moment
     already_received = NULL;
-    connexions_pending = NULL;
+    dlk_list_init(&connexions_pending);
         
     PRINT("Initialization of the listener");
     

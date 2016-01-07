@@ -8,16 +8,17 @@
 #include"common.h"
 #include"group.h"
 #include"node.h"
+#include"list.h"
 
 #ifndef LISTENER_H
 #define LISTENER_H
 
 // Types
-typedef struct connexions_pending_t{
+/* typedef struct connexions_pending_t{
     connexion_t* connexion;
     struct connexions_pending_t* prev;
     struct connexions_pending_t* next;
-}connexions_pending_t;
+    }connexions_pending_t; */
 
 // Globals
 int             listening_fd;       // listening socket for connexion

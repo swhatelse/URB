@@ -17,5 +17,6 @@ typedef struct dlk_list_t{
 void dlk_list_init(dlk_list_t* list);
 void dlk_list_append(dlk_list_t* list, dlk_element_t* element);
 void dlk_list_remove(dlk_list_t* list, dlk_element_t* element);
+void dlk_list_move_element_to(dlk_list_t* src, dlk_list_t* dst, dlk_element_t* element);
 
 #endif

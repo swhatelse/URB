@@ -88,28 +88,59 @@ void handle_id(message_id_t* msg){
 void handle_ack(message_t* ack, node_t* sender){
     // First check if we already received the corresponding message.
     // If not create an entry in the already_received list and add the ack.
-    // The message will be filled when received.
-    /* message_list_t* msg = get_msg(&already_received, ack->node_id, ack->id); */
-    /* if(!msg){ */
-    /*     msg = malloc(sizeof(message_list_t)); */
-    /* } */
-    DEBUG_VALID("[%d] Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
+    // The message will be filled later when received.
+    dlk_element_t* element_list = get_msg_from_list(&already_received, ack->node_id, ack->id);
+    message_element_t* element_msg;
+    
+    if(!element_list){
+        // Received an not for a message we didn't received yet
+        element_list = get_msg_from_list(&not_received_yet, ack->node_id, ack->id);
+        if(!element_list){
+            // Message not received yet and received the first ack for it
+            message_t* msg = malloc(sizeof(message_t));
+            element_msg = malloc(sizeof(message_element_t));
+            element_list = malloc(sizeof(dlk_element_t));
+
+            // Initialize the acknowledgements
+            initialize_acks(&element_msg->acks);
+            
+            msg->node_id = ack->node_id;
+            msg->id = ack->id;
+            msg->content = NULL;
+            element_msg->msg = msg;
+            element_list->data = element_msg;
+            
+            dlk_list_append(&not_received_yet, element_list);
+        }
+    }
+    element_msg = (message_element_t*)element_list->data;
+    add_ack(&element_msg, sender->id);    
 }
 
 void handle_normal(message_t* msg, node_t* sender){
-     DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
-     // Message have not received yet
-     if(!is_already_in(msg->id, msg->node_id, &already_received)){
-         insert_message(msg, &already_received);
-         // Send ack on new message
-         acknowledge(*msg);
-     }
-     // Message already received
-     else{
-          // Message already received, we can drop it
-         free(msg);
-         msg = NULL;
-     }
+    // Message have not received yet
+    if(!is_already_in(msg->id, msg->node_id, &already_received)){
+        dlk_element_t* element = get_msg_from_list(&not_received_yet, msg->node_id, msg->id);
+        // Check is the message is already referenced in the not_received yet
+        if(element){
+            dlk_list_move_element_to(&not_received_yet, &already_received, element);
+            message_element_t* msg_elmnt = (message_element_t*)element->data;
+            add_ack(&msg_elmnt, my_id);
+        }
+        else{
+            // Completely new message
+            insert_message(msg, &already_received);
+        }
+        DEBUG_RECV("[%d][%d] Message received from [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
+        acknowledge(*msg);
+        multicast(msg, sizeof(message_t));
+        DEBUG_SEND("[%d][%d] Retransmited\n", msg->node_id, msg->id);
+    }
+    else{
+        // Message already received, we can drop it
+        free(msg);
+        msg = NULL;
+    }
 }
 
 void handle_message(message_t* msg, node_t* sender){
@@ -171,8 +202,9 @@ void handle_connexion_requests(fd_set active_set){
                     add_node(connexion_pending_pop(current), msg.node_id);
                     // If the sending connexion is not establish, establishes it
                     if(!is_node_active(&send_sockets, msg.node_id)){
-                        DEBUG("================ Rejoin =====================\n");
-                        node_t* node = get_node_by_id(&send_sockets, msg.node_id); 
+                        node_t* node = get_node_by_id(&send_sockets, msg.node_id);
+                        DEBUG_ERR("Rejoin %d / %d\n", msg.node_id, node->id);
+                        close(node->connexion->fd);
                         connexion(node->connexion);
                         node->active = true;
                     }
@@ -232,6 +264,7 @@ void listener_init(){
     // TODO here just for the moment
     dlk_list_init(&already_received);
     dlk_list_init(&connexions_pending);
+    dlk_list_init(&not_received_yet);
         
     PRINT("Initialization of the listener");
     

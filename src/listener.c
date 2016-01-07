@@ -99,7 +99,7 @@ void handle_ack(message_t* ack, node_t* sender){
 void handle_normal(message_t* msg, node_t* sender){
      DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
      // Message have not received yet
-     if(!is_already_in(msg->id, msg->node_id, already_received)){
+     if(!is_already_in(msg->id, msg->node_id, &already_received)){
          insert_message(msg, &already_received);
          // Send ack on new message
          acknowledge(*msg);
@@ -230,7 +230,7 @@ void handle_event(fd_set active_set){
  */
 void listener_init(){
     // TODO here just for the moment
-    already_received = NULL;
+    dlk_list_init(&already_received);
     dlk_list_init(&connexions_pending);
         
     PRINT("Initialization of the listener");

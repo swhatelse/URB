@@ -75,16 +75,16 @@ int beb(const void* content, size_t size){
  * @return true or false
  */
 // TODO modify it to return the msg or null
-bool is_already_in(const int msg_id, const int node_id, message_list_t* list){
-    message_list_t* current = list;
+bool is_already_in(const int msg_id, const int node_id, dlk_list_t* list){
+    dlk_element_t* current = list->tail;
 
     // The list is empty.
-    if(!list){
+    if(!current){
         return false;
     }
     
     while(current != NULL){
-         if(node_id == current->msg->node_id && msg_id == current->msg->id){
+        if(node_id == ((message_element_t*)current->data)->msg->node_id && msg_id == ((message_element_t*)current->data)->msg->id){
               return true;
          }
         current = current->next;
@@ -106,7 +106,7 @@ void acknowledge(message_t msg){
 /** Tags the nodes from which we have received an ack
  * 
  */
-void add_ack(message_list_t** msg, int node_id){
+void add_ack(message_element_t** msg, int node_id){
     assert((*msg)->acks[node_id - 1] == false);
     (*msg)->acks[node_id - 1] = true;
     DEBUG_VALID("[%d] Ack [%d][%d]\n", (*msg)->msg->id, (*msg)->msg->node_id, (*msg)->msg->id);
@@ -115,51 +115,36 @@ void add_ack(message_list_t** msg, int node_id){
 /** Add the message msg of the sender sender in the already_received list
  *
  */
-void insert_message(message_t* msg, message_list_t** list){
-    message_list_t* current = *list;
-
-    message_list_t* new_msg = malloc(sizeof(message_list_t));
-    new_msg->msg = msg;
-
+void insert_message(message_t* msg, dlk_list_t* list){
+    dlk_element_t* element = malloc(sizeof(dlk_element_t));
+    message_element_t* msg_elmnt = malloc(sizeof(message_element_t));
+    msg_elmnt->msg = msg;
+    element->data = (void*)msg_elmnt;
+    
     // Initialize acks
-    new_msg->acks = malloc(sizeof(int) * receive_sockets.count + 1);
+    msg_elmnt->acks = malloc(sizeof(int) * receive_sockets.count + 1);
     for(int i = 0; i  < receive_sockets.count + 1; i++){
-        new_msg->acks[i] = false;
+        msg_elmnt->acks[i] = false;
     }
+
+    dlk_list_append(&already_received, element);
     
     // The message is taken it count as in ack of itself.
     // This way the sender doesn't need to ack its message.
-    add_ack(&(new_msg), msg->node_id);
-    
-    new_msg->next = NULL;
-    
-    if(current == NULL){
-        new_msg->prev = NULL;
-        /* new_msg->id = msg->id; */
-        *list = new_msg;
-    }
-    else{
-        while(current->next != NULL){
-            current = current->next;
-        }
-        current->next = new_msg;
-        new_msg->prev = current;
-        /* new_msg->id = current->id + 1; */
-    }
+    add_ack(&msg_elmnt, msg->node_id);    
 }
 
 /** Remove the message from the already_received list and free the memory
  * @param id Message identifier
  * @return true if the message has been removed otherwise false
  */
-bool remove_message(const int id, const int node_id){
-    message_list_t* current = already_received;
+bool remove_message(dlk_list_t* list, const int id, const int node_id){
+    dlk_element_t* current = list.tail;
     bool found = false;
 
     while(current != NULL || !found){
-        if(current->msg->id == id && current->msg->node_id == node_id){
-            current->prev->next = current->next;
-            current->next->prev = current->prev;
+        if(*((message_element_t*)current->data)->msg->id == id && *((message_element_t*)current->data)->msg->node_id == node_id){
+            dlk_list_remove(list, current);
             free(current);
             found = true;
         }
@@ -174,9 +159,9 @@ bool remove_message(const int id, const int node_id){
 /** Get the message by using its node_id and msg_id.
  * @return The message or NULL if not in the list.
  */
-message_list_t* get_msg(message_list_t** list, const int node_id, const int msg_id){
-    message_list_t* current = *list;
-    while(current != NULL || (current->msg->id != msg_id && current->msg->node_id != node_id)){
+dlk_element_t* get_msg_from_list(dlk_list_t* list, const int node_id, const int msg_id){
+    dlk_element_t* current = list.tail;
+    while(current != NULL || (*((message_element_t*)current->data)->msg->id != msg_id && *((message_element_t*)current->data)->msg->node_id != node_id)){
         /* if(current->msg->id == msg_id && current->msg->node_id == node_id){ */
         /*     return current; */
         /* } */

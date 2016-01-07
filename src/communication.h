@@ -2,6 +2,7 @@
 #include<stdbool.h>
 
 #include"common.h"
+#include"list.h"
 
 #ifndef COMMUNICATION
 #define COMMUNICATION
@@ -27,26 +28,22 @@ typedef struct message_ack_t{
     int node_id;
 }message_ack_t;
 
-typedef struct message_list_t{
+typedef struct message_element_t{
     message_t* msg;
-    /* int id; */
     bool* acks;
-    /* int count_ack; */
-    struct message_list_t* prev;
-    struct message_list_t* next;
-}message_list_t;
+}message_element_t;
 
 // Global vars
-message_list_t *already_received;
+dlk_list_t already_received;
 
 // Functions
-void insert_message(message_t* msg, message_list_t** list);
-bool remove_message(const int id, const int node_id);
-message_list_t* get_msg(message_list_t** list, const int node_id, const int msg_id);
-bool is_already_in(const int msg_id, const int node_id, message_list_t* list);
+void insert_message(message_t* msg, dlk_list_t* list);
+bool remove_message(dlk_list_t* list, const int id, const int node_id);
+message_element_t* get_msg(dlk_list_t* list, const int node_id, const int msg_id);
+bool is_already_in(const int msg_id, const int node_id, dlk_list_t* list);
 
 void acknowledge(message_t msg);
-void add_ack(message_list_t** msg, int node_id);
+void add_ack(message_element_t** msg, int node_id);
 void deliver(const message_t message);
 int beb(const void* content, size_t size);
 int urb(const message_t message);

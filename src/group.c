@@ -24,12 +24,12 @@ int connexion(connexion_t* cnx){
     }
 
     // TODO send node id
-    //DEBUG("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
     message_id_t msg;
     msg.type = 'I';
     msg.node_id = my_id;
-    send(cnx->fd, &msg, sizeof(msg), 0);
-    
+    if( send(cnx->fd, &msg, sizeof(msg), 0) > -1){
+        DEBUG_SEND("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
+    }
     return EXIT_SUCCESS;
 }
 
@@ -72,7 +72,7 @@ void join(){
     }
     
     // Debug
-    dump_group_fd(send_sockets);
+    //dump_group_fd(send_sockets);
 }
 
 /** Add a node to the receiving list
@@ -100,6 +100,7 @@ void remove_node(node_t* node){
 
 void* message_handler(){
     join();
+    sleep(2);
     return NULL;
 }
 

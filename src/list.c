@@ -45,3 +45,7 @@ void dlk_list_remove(dlk_list_t* list, dlk_element_t* element){
     element->next = NULL;
 }
 
+void dlk_list_move_element_to(dlk_list_t* src, dlk_list_t* dst, dlk_element_t* element){
+    dlk_list_remove(src, element);
+    dlk_list_append(dst, element);
+}

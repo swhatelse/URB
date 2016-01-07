@@ -27,11 +27,11 @@ int generate_msg_id(){
      return current_msg_id++;
 }
 
-int multicast(const message_t* msg, size_t size){
+void multicast(const message_t* msg, size_t size){
     int retval;
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
-            DEBUG("Sending [%d][%d] to [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+            /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd); */
             //TODO ensure that all have been sent
             retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, size,0);
         }
@@ -63,8 +63,9 @@ int beb(const void* content, size_t size){
     /*         sleep(5); */
     /*     } */
     /* } */
-    multicast(msg, sizeof(message_t));
 
+    multicast(msg, sizeof(message_t));
+    DEBUG_SEND("[%d][%d] Broadcasted\n", msg->node_id, msg->id);
     return 0;
 }
 
@@ -103,13 +104,23 @@ void acknowledge(message_t msg){
     multicast(ack, sizeof(message_t));
 }
 
+/** Allocates and initialize acks to false
+ *
+ */
+void initialize_acks(bool** acks){
+    *acks = calloc(receive_sockets.count + 1, sizeof(bool));
+    for(int i = 0; i < receive_sockets.count + 1; i++){
+        (*acks)[i] = false;
+    }
+}
+
 /** Tags the nodes from which we have received an ack
  * 
  */
 void add_ack(message_element_t** msg, int node_id){
     assert((*msg)->acks[node_id - 1] == false);
     (*msg)->acks[node_id - 1] = true;
-    DEBUG_VALID("[%d] Ack [%d][%d]\n", (*msg)->msg->id, (*msg)->msg->node_id, (*msg)->msg->id);
+    DEBUG_VALID("[%d][%d] Ack from [%d]\n", (*msg)->msg->node_id, (*msg)->msg->id, node_id);
 }
 
 /** Add the message msg of the sender sender in the already_received list
@@ -121,11 +132,7 @@ void insert_message(message_t* msg, dlk_list_t* list){
     msg_elmnt->msg = msg;
     element->data = (void*)msg_elmnt;
     
-    // Initialize acks
-    msg_elmnt->acks = malloc(sizeof(int) * receive_sockets.count + 1);
-    for(int i = 0; i  < receive_sockets.count + 1; i++){
-        msg_elmnt->acks[i] = false;
-    }
+    initialize_acks(&msg_elmnt->acks);
 
     dlk_list_append(&already_received, element);
     
@@ -161,11 +168,12 @@ bool remove_message(dlk_list_t* list, const int id, const int node_id){
  */
 dlk_element_t* get_msg_from_list(dlk_list_t* list, const int node_id, const int msg_id){
     dlk_element_t* current = list->tail;
-    while(current != NULL || ((message_element_t*)current->data)->msg->id != msg_id && ((message_element_t*)current->data)->msg->node_id != node_id){
-        /* if(current->msg->id == msg_id && current->msg->node_id == node_id){ */
-        /*     return current; */
-        /* } */
+    while(current != NULL){
+        if(((message_element_t*)current->data)->msg->id != msg_id && ((message_element_t*)current->data)->msg->node_id != node_id){
+            return current;
+        }
         current = current->next;
     }
-    return current;
+    return NULL;
 }
+

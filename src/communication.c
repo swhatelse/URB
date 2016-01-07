@@ -75,7 +75,7 @@ int beb(const void* content, size_t size){
  * @return true or false
  */
 // TODO modify it to return the msg or null
-bool is_already_in(message_t msg, message_list_t* list){
+bool is_already_in(const int msg_id, const int node_id, message_list_t* list){
     message_list_t* current = list;
 
     if(!list){
@@ -89,7 +89,7 @@ bool is_already_in(message_t msg, message_list_t* list){
         /*     } */
         /* } */
 
-         if(msg.node_id == current->msg->node_id && msg.id == current->msg->id){
+         if(node_id == current->msg->node_id && msg_id == current->msg->id){
               return true;
          }
         current = current->next;
@@ -111,9 +111,10 @@ void acknowledge(message_t msg){
 /** Tags the nodes from which we have received an ack
  * 
  */
-void add_ack(bool** acks, int node_id){
-    assert((*acks)[node_id - 1] == false);
-    (*acks)[node_id - 1] = true;
+void add_ack(message_list_t** msg, int node_id){
+    assert((*msg)->acks[node_id - 1] == false);
+    (*msg)->acks[node_id - 1] = true;
+    DEBUG_VALID("[%d] Ack [%d][%d]\n", (*msg)->msg->id, (*msg)->msg->node_id, (*msg)->msg->id);
 }
 
 /** Add the message msg of the sender sender in the already_received list
@@ -133,8 +134,7 @@ void insert_message(message_t* msg, message_list_t** list){
     
     // The message is taken it count as in ack of itself.
     // This way the sender doesn't need to ack its message.
-    add_ack(&(new_msg->acks), msg->node_id);
-    DEBUG_VALID("[%d] Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
+    add_ack(&(new_msg), msg->node_id);
     
     new_msg->next = NULL;
     
@@ -174,4 +174,18 @@ bool remove_message(const int id, const int node_id){
     }
     
     return found;
+}
+
+/** Get the message by using its node_id and msg_id.
+ * @return The message or NULL if not in the list.
+ */
+message_list_t* get_msg(message_list_t** list, const int node_id, const int msg_id){
+    message_list_t* current = *list;
+    while(current != NULL || (current->msg->id != msg_id && current->msg->node_id != node_id)){
+        /* if(current->msg->id == msg_id && current->msg->node_id == node_id){ */
+        /*     return current; */
+        /* } */
+        current = current->next;
+    }
+    return current;
 }

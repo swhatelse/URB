@@ -42,9 +42,11 @@ message_list_t *already_received;
 // Functions
 void insert_message(message_t* msg, message_list_t** list);
 bool remove_message(const int id, const int node_id);
-bool is_already_in(const message_t msg, message_list_t* list);
+message_list_t* get_msg(message_list_t** list, const int node_id, const int msg_id);
+bool is_already_in(const int msg_id, const int node_id, message_list_t* list);
+
 void acknowledge(message_t msg);
-void add_ack(bool** acks, int node_id);
+void add_ack(message_list_t** msg, int node_id);
 void deliver(const message_t message);
 int beb(const void* content, size_t size);
 int urb(const message_t message);

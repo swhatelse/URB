@@ -24,7 +24,7 @@ int connexion(connexion_t* cnx){
     }
 
     // TODO send node id
-    DEBUG("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
+    //DEBUG("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
     message_id_t msg;
     msg.type = 'I';
     msg.node_id = my_id;

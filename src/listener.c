@@ -100,14 +100,25 @@ void handle_id(message_id_t* msg){
     printf("%d\n", msg->node_id);    
 }
 
+/** Manage the received acks
+ * @param ack The received acknowledgment.
+ * @param sender The node which sent ack.
+ */
 void handle_ack(message_t* ack, node_t* sender){
+    // First check if we already received the corresponding message.
+    // If not create an entry in the already_received list and add the ack.
+    // The message will be filled when received.
+    /* message_list_t* msg = get_msg(&already_received, ack->node_id, ack->id); */
+    /* if(!msg){ */
+    /*     msg = malloc(sizeof(message_list_t)); */
+    /* } */
     DEBUG_VALID("[%d] Ack [%d][%d]\n", sender->id, ack->node_id, ack->id);
 }
 
 void handle_normal(message_t* msg, node_t* sender){
      DEBUG("[%d] Message received from [%s:%d][%d]\n", msg->node_id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
      // Message have not received yet
-     if(!is_already_in(*msg, already_received)){
+     if(!is_already_in(msg->id, msg->node_id, already_received)){
          insert_message(msg, &already_received);
          // Send ack on new message
          acknowledge(*msg);

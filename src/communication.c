@@ -139,11 +139,11 @@ void insert_message(message_t* msg, dlk_list_t* list){
  * @return true if the message has been removed otherwise false
  */
 bool remove_message(dlk_list_t* list, const int id, const int node_id){
-    dlk_element_t* current = list.tail;
+    dlk_element_t* current = list->tail;
     bool found = false;
 
     while(current != NULL || !found){
-        if(*((message_element_t*)current->data)->msg->id == id && *((message_element_t*)current->data)->msg->node_id == node_id){
+        if(((message_element_t*)current->data)->msg->id == id && ((message_element_t*)current->data)->msg->node_id == node_id){
             dlk_list_remove(list, current);
             free(current);
             found = true;
@@ -160,8 +160,8 @@ bool remove_message(dlk_list_t* list, const int id, const int node_id){
  * @return The message or NULL if not in the list.
  */
 dlk_element_t* get_msg_from_list(dlk_list_t* list, const int node_id, const int msg_id){
-    dlk_element_t* current = list.tail;
-    while(current != NULL || (*((message_element_t*)current->data)->msg->id != msg_id && *((message_element_t*)current->data)->msg->node_id != node_id)){
+    dlk_element_t* current = list->tail;
+    while(current != NULL || ((message_element_t*)current->data)->msg->id != msg_id && ((message_element_t*)current->data)->msg->node_id != node_id){
         /* if(current->msg->id == msg_id && current->msg->node_id == node_id){ */
         /*     return current; */
         /* } */

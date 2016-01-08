@@ -27,8 +27,11 @@ int connexion(connexion_t* cnx){
     message_id_t msg;
     msg.type = 'I';
     msg.node_id = my_id;
-    if( send(cnx->fd, &msg, sizeof(msg), 0) > -1){
+    if( send(cnx->fd, &msg, sizeof(msg), 0) > 0){
         DEBUG_SEND("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
+    }
+    else{
+        DEBUG_SEND("Failed to send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
     }
     return EXIT_SUCCESS;
 }

@@ -27,13 +27,36 @@ int generate_msg_id(){
      return current_msg_id++;
 }
 
+bool send_all(int socket, void* buf, size_t length){
+    char* cursor = (char*) buf;
+    while(length > 0){
+        int sent = send(socket, cursor, length, 0);
+        if(sent  < 1) return false; 
+        cursor += sent;
+        length -= sent;
+    }
+    return true;
+}
+
+bool recv_all(int socket, void* buf, size_t length){
+    char* cursor = (char*) buf;
+    while(length > 0){
+        int received = recv(socket, cursor, length, 0);
+        if(received  < 1) return false; 
+        cursor += received;
+        length -= received;
+    }
+    return true;
+}
+
 void multicast(const message_t* msg, size_t size){
-    int retval;
+    bool retval;
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
             /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd); */
             //TODO ensure that all have been sent
-            retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, size,0);
+            /* retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, size,0); */
+            retval = send_all(send_sockets.nodes[i]->connexion->fd, (void*) msg, size);
         }
     }
 }

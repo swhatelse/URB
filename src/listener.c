@@ -182,7 +182,7 @@ int connexion_accept(){
 
 
 void handle_connexion_requests(fd_set active_set){
-     int size;
+     /* int size; */
      message_id_t msg;
     
      // First connexion step
@@ -195,8 +195,9 @@ void handle_connexion_requests(fd_set active_set){
      // Accept pending connexion
      while(current != NULL){
          if(((connexion_t*)(current->data)) && FD_ISSET(((connexion_t*)(current->data))->fd, &active_set)){
-               size = recv(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t), 0);
-               if(size > 0){
+               /* size = recv(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t), 0); */
+               bool retval = recv_all(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t));
+               if(retval){
                     DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
                     /* add_node(((connexion_t*)(current->data)), msg.node_id); */
                     add_node(connexion_pending_pop(current), msg.node_id);
@@ -242,10 +243,10 @@ void handle_event(fd_set active_set){
         if(receive_sockets.nodes[i] != NULL && receive_sockets.nodes[i]->connexion != NULL){
             if(FD_ISSET(receive_sockets.nodes[i]->connexion->fd, &active_set)){
                 message_t *msg = malloc(sizeof(message_t));
-                int size = 0;
+                /* int size = 0; */
                 // The size of message_t is used here because it is the longuest we can receive.
-                size = recv(receive_sockets.nodes[i]->connexion->fd, (void*)msg, sizeof(message_t), 0);
-                if(size > 0){
+                bool retval = recv_all(receive_sockets.nodes[i]->connexion->fd, (void*)msg, sizeof(message_t));
+                if(retval){
                     handle_message(msg, receive_sockets.nodes[i]);
                 }
                 else{
@@ -273,7 +274,10 @@ void listener_init(){
         perror("Failed to attribute the socket\n");
         exit(EXIT_FAILURE);
     }
-  
+
+    int optval=1;
+    setsockopt(listening_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    
     my_addr.sin_family = AF_INET;
     /* my_addr.sin_port = htons(my_port); */
     /* set_my_port(my_port);     */
@@ -305,8 +309,8 @@ void* listener_run(){
         timeout.tv_usec = 0;
 
         fd_set active_set;
-        FD_ZERO(&active_set);
-        FD_SET(listening_fd, &active_set);
+        /* FD_ZERO(&active_set); */
+        /* FD_SET(listening_fd, &active_set); */
         
         active_set = reception_fd_set;
 
@@ -318,7 +322,7 @@ void* listener_run(){
             handle_event(active_set);
         }
         else{
-
+            DEBUG("No Event\n");
         }
     }
     return NULL;

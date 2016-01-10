@@ -7,15 +7,15 @@
 #include"node.h"
 
 int get_node_port(node_t* node){
-    return node->connexion->infos.sin_port;
+    return node->inbox->infos.sin_port;
 }
 
 int get_node_addr(node_t* node){
-   return node->connexion->infos.sin_addr.s_addr;
+   return node->inbox->infos.sin_addr.s_addr;
 }
 
 int get_node_fd(node_t* node){
-   return node->connexion->fd;
+   return node->inbox->fd;
 }
 
 connexion_t* connexion_create(char* addr, int port){
@@ -31,8 +31,10 @@ connexion_t* connexion_create(char* addr, int port){
 
 node_t* node_create(connexion_t* cnx){
     node_t* node = (node_t*)malloc(sizeof(node_t));
-    node->connexion = cnx;
-    node->active = false;
+    node->outbox = cnx;
+    node->inbox = NULL;
+    node->in_connected = false;
+    node->out_connected = false;
     node->id = -1;
 
     return node;

@@ -57,16 +57,19 @@ int init(char *file, char *my_addr, int port){
         group_count++;
     }
 
-    send_sockets.count = group_count - 1;
-    receive_sockets.count = group_count - 1;
-    send_sockets.nodes = calloc(send_sockets.count, sizeof(node_t*));
-    receive_sockets.nodes = calloc(receive_sockets.count, sizeof(node_t*));
+    /* send_sockets.count = group_count - 1; */
+    /* receive_sockets.count = group_count - 1; */
+    /* send_sockets.nodes = calloc(send_sockets.count, sizeof(node_t*)); */
+    /* receive_sockets.nodes = calloc(receive_sockets.count, sizeof(node_t*)); */
 
+    // New
+    group = g_hash_table_new(g_int_hash, g_int_equal);
+    
     // Just initialize the groups
-    for(int i = 0; i < group_count - 1; i++){
-        send_sockets.nodes[i] = NULL;
-        receive_sockets.nodes[i] = NULL;
-    }
+    /* for(int i = 0; i < group_count - 1; i++){ */
+    /*     send_sockets.nodes[i] = NULL; */
+    /*     receive_sockets.nodes[i] = NULL; */
+    /* } */
 
     rewind(fd);
 
@@ -74,14 +77,19 @@ int init(char *file, char *my_addr, int port){
         addr = strtok(buf, &sep);
         remote_port = atoi(strtok(NULL, &sep));
         node_id = atoi( strtok(NULL, &sep) );
+
         if( remote_port != port || strcmp(addr,my_addr) != 0){
-            // Fill the connecting sockets
-            send_sockets.nodes[i] = node_create(NULL);
-            send_sockets.nodes[i]->id = node_id;
-            send_sockets.nodes[i]->connexion = connexion_create(addr,remote_port);
-            // Pre-fill the listening sockets
-            receive_sockets.nodes[i] = node_create(NULL);
-            receive_sockets.nodes[i]->id = node_id;
+            node_t* peer = node_create(NULL);
+            peer->id = node_id ;
+            peer->outbox = connexion_create(addr,remote_port);
+            g_hash_table_insert(group, &peer->id, peer);
+            /* // Fill the connecting sockets */
+            /* send_sockets.nodes[i] = node_create(NULL); */
+            /* send_sockets.nodes[i]->id = node_id; */
+            /* send_sockets.nodes[i]->connexion = connexion_create(addr,remote_port); */
+            /* // Pre-fill the listening sockets */
+            /* receive_sockets.nodes[i] = node_create(NULL); */
+            /* receive_sockets.nodes[i]->id = node_id; */
             i++;
         }
         else{

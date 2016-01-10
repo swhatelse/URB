@@ -49,14 +49,20 @@ bool recv_all(int socket, void* buf, size_t length){
     return true;
 }
 
-void multicast(const message_t* msg, size_t size){
-    bool retval;
-    for(int i = 0; i < send_sockets.count; i++){
-        if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
-            /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd); */
-            retval = send_all(send_sockets.nodes[i]->connexion->fd, (void*) msg, size);
-        }
+void multicast_foreach(gpointer key, gpointer value, gpointer userdata){
+    int retval;
+    node_t* node = (node_t*) value;
+    message_t* msg = (message_t*) userdata;
+    if(node->outbox->fd != -1 && node->out_connected){
+        /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(node->connexion->infos.sin_addr), ntohs(node->connexion->infos.sin_port), node->connexion->fd); */
+        retval = send_all(node->outbox->fd, (void*) msg, msg->size);
     }
+}
+
+void multicast(message_t* msg, size_t size){
+    bool retval;
+    msg->size = size;
+    g_hash_table_foreach(group, (GHFunc)multicast_foreach, msg);    
 }
 
 /** Implementation of best effort broadcast.
@@ -120,8 +126,10 @@ void acknowledge(message_t msg){
  *
  */
 void initialize_acks(bool** acks){
-    *acks = calloc(receive_sockets.count + 1, sizeof(bool));
-    for(int i = 0; i < receive_sockets.count + 1; i++){
+    size_t size = g_hash_table_size(group) + 1;
+    
+    *acks = calloc(size, sizeof(bool));
+    for(int i = 0; i < size; i++){
         (*acks)[i] = false;
     }
 }
@@ -133,6 +141,15 @@ void add_ack(message_element_t** msg, int node_id){
     assert((*msg)->acks[node_id - 1] == false);
     (*msg)->acks[node_id - 1] = true;
     DEBUG_VALID("[%d][%d] Ack from [%d]\n", (*msg)->msg->node_id, (*msg)->msg->id, node_id);
+}
+
+void is_replicated_foreach(gpointer key, gpointer value, gpointer userdata){
+    node_t* node = (node_t*) value;
+}
+
+bool is_replicated(message_element_t* element){
+    g_hash_table_foreach(group, (GHFunc)is_replicated, NULL);    
+    return false;
 }
 
 /** Add the message msg of the sender sender in the already_received list

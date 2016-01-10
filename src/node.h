@@ -12,9 +12,11 @@ typedef struct connexion_t{
 
 
 typedef struct node_t{
-    connexion_t* connexion; // Connexion for accepting connexions
+    connexion_t* inbox; // Connexion for accepting connexions
+    connexion_t* outbox; // Connexion for accepting connexions
     int id;
-    bool active;
+    bool in_connected;  // True when inbox established
+    bool out_connected; // True when outbox established
 }node_t;
 
 // Globals

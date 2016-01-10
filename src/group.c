@@ -28,8 +28,6 @@ int connexion(connexion_t* cnx){
         return EXIT_FAILURE;    
     }
 
-    /* fcntl(cnx->fd, F_SETFL, O_NONBLOCK); */
-    
     // TODO send node id
     message_id_t msg;
     msg.type = 'I';
@@ -44,18 +42,26 @@ int connexion(connexion_t* cnx){
     return EXIT_SUCCESS;
 }
 
-bool is_node_active(group_t* group, int node_id){
-    /* return  group->nodes[node_id - 1]->active; */
-    return get_node_by_id(group, node_id)->active;
+bool is_node_active(int node_id){
+    return get_node_by_id(node_id)->in_connected;
 }
 
-node_t* get_node_by_id(group_t* group, int node_id){
-    for(int i = 0; i < group->count; i++){
-        if(group->nodes[i]->id == node_id){
-            return group->nodes[i];
+node_t* get_node_by_id(int node_id){
+    return (node_t*) g_hash_table_lookup(group, &node_id);    
+}
+
+void foreach_connect(gpointer key, gpointer value, gpointer userdata){
+    node_t *node = (node_t*) value;
+    if(!node->out_connected){
+        if(connexion(node->outbox) == EXIT_SUCCESS){
+            node->out_connected = true;
+            DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(node->outbox->infos.sin_addr), ntohs(node->outbox->infos.sin_port), node->outbox->fd);
+        }
+        else{
+            node->out_connected = false;
+            DEBUG_ERR("Failed to connect to [%s:%d][%d]\n", inet_ntoa(node->outbox->infos.sin_addr), ntohs(node->outbox->infos.sin_port), node->outbox->fd);
         }
     }
-    return NULL;
 }
 
 /** Join the group
@@ -63,20 +69,9 @@ node_t* get_node_by_id(group_t* group, int node_id){
  */
 void join(){
     int *fds = NULL;
-    fds = calloc(send_sockets.count, sizeof(int));
+    fds = calloc(g_hash_table_size(group), sizeof(int));
 
-    for(int i = 0; i < send_sockets.count; i++){
-        if(!send_sockets.nodes[i]->active){
-            if(connexion(send_sockets.nodes[i]->connexion) != EXIT_FAILURE ){
-                send_sockets.nodes[i]->active = true;
-                DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
-            }
-            else{
-                send_sockets.nodes[i]->active = false;
-                DEBUG_ERR("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
-            }
-        }
-    }
+    g_hash_table_foreach(group, (GHFunc)foreach_connect, NULL);
 }
     
 /** Add a node to the receiving list
@@ -86,15 +81,19 @@ void join(){
  */
 /* int add_node(const int fd, const struct sockaddr_in addr){ */
 int add_node(connexion_t* cnx, const int node_id){
+    assert(cnx);
     assert(cnx->fd > 2); // To be sure the fd is valid
     
-    for(int i = 0; i < receive_sockets.count; i++){
-        if(receive_sockets.nodes[i]->id == node_id){
-            receive_sockets.nodes[i]->connexion = cnx;
-            return EXIT_SUCCESS;
-        }
+    node_t* node = g_hash_table_lookup(group, &node_id);
+    if(node){
+        node->inbox = cnx;
+        node->in_connected = true;
+        return EXIT_SUCCESS;
     }
-    return EXIT_FAILURE;
+    else{
+        node->in_connected = false;
+        return EXIT_FAILURE;
+    }
 }
 
 // TODO is it useful?
@@ -109,7 +108,7 @@ void* message_handler(){
 }
 
 void dump_group_fd(group_t group){
-    for(int i = 0; i < group.count; i++){
-        DEBUG("Send sockets [%s:%d][%d]\n", inet_ntoa(group.nodes[i]->connexion->infos.sin_addr), ntohs(get_node_port(group.nodes[i])), get_node_fd(group.nodes[i]));
-    }
+    /* for(int i = 0; i < group.count; i++){ */
+    /*     DEBUG("Send sockets [%s:%d][%d]\n", inet_ntoa(group.nodes[i]->connexion->infos.sin_addr), ntohs(get_node_port(group.nodes[i])), get_node_fd(group.nodes[i])); */
+    /* } */
 }

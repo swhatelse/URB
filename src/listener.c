@@ -116,7 +116,10 @@ void handle_ack(message_t* ack, node_t* sender){
     }
     else{
         element_msg = (message_element_t*)element_list->data;
-        add_ack(&element_msg, sender->id);    
+        add_ack(&element_msg, sender->id);
+        if(is_replicated(element_msg)){
+            DEBUG_VALID("[%d][%d]Delivered\n", ack->id, ack->node_id);
+        }
     }
 }
 
@@ -134,7 +137,7 @@ void handle_normal(message_t* msg, node_t* sender){
             // Completely new message
             insert_message(msg, &already_received);
         }
-        DEBUG_RECV("[%d][%d] Message received from [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(sender->connexion->infos.sin_addr), ntohs(sender->connexion->infos.sin_port), sender->connexion->fd);
+        DEBUG_RECV("[%d][%d] Message received from [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(sender->inbox->infos.sin_addr), ntohs(sender->inbox->infos.sin_port), sender->inbox->fd);
         acknowledge(*msg);
         multicast(msg, sizeof(message_t));
         DEBUG_SEND("[%d][%d] Retransmited\n", msg->node_id, msg->id);
@@ -197,11 +200,11 @@ void handle_connexion_requests(fd_set active_set){
                  DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
                  add_node(connexion_pending_pop(current), msg.node_id);
                  // If the sending connexion is not establish, establishes it
-                 if(!is_node_active(&send_sockets, msg.node_id)){
-                     node_t* node = get_node_by_id(&send_sockets, msg.node_id);
+                 node_t* node = get_node_by_id(msg.node_id);
+                 if(!node->out_connected){
                      DEBUG_ERR("Rejoin %d / %d\n", msg.node_id, node->id);
-                     connexion(node->connexion);
-                     node->active = true;
+                     connexion(node->outbox);
+                     node->out_connected = true;
                  }
              }
              else{
@@ -219,36 +222,40 @@ void handle_connexion_requests(fd_set active_set){
 }
 
 void handle_disconnexion(int index){
-    if(receive_sockets.nodes[index]->connexion){
-        DEBUG("[%d] Deconnexion\n", receive_sockets.nodes[index]->id);
-        FD_CLR(receive_sockets.nodes[index]->connexion->fd, &reception_fd_set);
-        close(receive_sockets.nodes[index]->connexion->fd);
-        free(receive_sockets.nodes[index]->connexion);
-        receive_sockets.nodes[index]->connexion = NULL;
+    node_t* node = g_hash_table_lookup(group, &index);
+    if(node->inbox){
+        DEBUG("[%d] Deconnexion\n", node->id);
+        FD_CLR(node->inbox->fd, &reception_fd_set);
+        close(node->inbox->fd);
+        free(node->inbox);
+        node->inbox = NULL;
         // Not sure it is need
-        /* remove_node(receive_sockets.nodes[index]); */
+        /* remove_node(node); */
+    }
+}
+
+void handle_event_group(gpointer key, gpointer value, gpointer userdata){
+    node_t* node = (node_t*) value;
+    fd_set active_set = *(fd_set*)userdata;
+    if(node != NULL && node->inbox != NULL){
+        if(FD_ISSET(node->inbox->fd, &active_set)){
+            message_t *msg = malloc(sizeof(message_t));
+            // The size of message_t is used here because it is the longuest we can receive.
+            bool retval = recv_all(node->inbox->fd, (void*)msg, sizeof(message_t));
+            if(retval){
+                handle_message(msg, node);
+            }
+            else{
+                free(msg);
+                handle_disconnexion(*(int*)key);
+            }
+        }
     }
 }
 
 void handle_event(fd_set active_set){
     handle_connexion_requests(active_set);
-    
-    for(int i = 0; i < receive_sockets.count; i++){
-        if(receive_sockets.nodes[i] != NULL && receive_sockets.nodes[i]->connexion != NULL){
-            if(FD_ISSET(receive_sockets.nodes[i]->connexion->fd, &active_set)){
-                message_t *msg = malloc(sizeof(message_t));
-                // The size of message_t is used here because it is the longuest we can receive.
-                bool retval = recv_all(receive_sockets.nodes[i]->connexion->fd, (void*)msg, sizeof(message_t));
-                if(retval){
-                    handle_message(msg, receive_sockets.nodes[i]);
-                }
-                else{
-                    free(msg);
-                    handle_disconnexion(i);
-                }
-            }
-        }
-    }
+    g_hash_table_foreach(group, handle_event_group, &active_set);
 }
 
 /** Prepare the socket for waiting connexion

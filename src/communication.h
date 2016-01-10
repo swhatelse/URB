@@ -13,6 +13,7 @@ typedef struct message_t{
     int id; // Id of the message
     /* node_t sender; */
     int node_id; // Id of origin node
+    size_t size;
     void* content;
 }message_t;
 
@@ -46,11 +47,12 @@ bool is_already_in(const int msg_id, const int node_id, dlk_list_t* list);
 void initialize_acks(bool** acks);
 void acknowledge(message_t msg);
 void add_ack(message_element_t** msg, int node_id);
-void deliver(const message_t message);
-void multicast(const message_t* msg, size_t size);
+
+void multicast(message_t* msg, size_t size);
 int beb(const void* content, size_t size);
 int urb(const message_t message);
 bool recv_all(int socket, void* buf, size_t length);
 
+void deliver(const message_t message);
 bool is_replicated(message_element_t* msg);
 #endif

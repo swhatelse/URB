@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-g -std=c99 
-LDLIBS=-lpthread
+LDLIBS=`pkg-config --cflags --libs glib-2.0` -lpthread
 BIN=bin
 TEST_BIN=$(BIN)/tests
 SRC=src
@@ -19,10 +19,10 @@ main: $(SRC)/main.c $(SRC)/common.c $(SRC)/group.c $(SRC)/listener.c $(SRC)/comm
 	$(CC) $(CFLAGS) -o $(BIN)/$@ $^ $(LDLIBS)
 
 test_server: $(TEST_SRC)/test_server.c $(SRC)/listener.c $(SRC)/common.c $(SRC)/communication.c $(SRC)/group.c $(SRC)/node.c $(SRC)/list.c
-	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
+	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^ $(LDLIBS)
 
 test_client: $(TEST_SRC)/test_client.c $(SRC)/group.c $(SRC)/common.c $(SRC)/communication.c $(SRC)/node.c $(SRC)/list.c
-	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^
+	$(CC) $(CFLAGS) -o $(TEST_BIN)/$@ $^ $(LDLIBS)
 
 clean:
 	rm -rf $(BIN)/main

@@ -25,5 +25,7 @@ int get_node_port(node_t* node);
 int get_node_addr(node_t* node);
 int get_node_fd(node_t* node);
 
+node_t* node_create(connexion_t* cnx);
+connexion_t* connexion_create(char* addr, int port);
 bool is_the_same_node(const node_t node1, const node_t node2);
 #endif

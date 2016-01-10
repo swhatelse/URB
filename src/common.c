@@ -18,11 +18,6 @@ void set_my_port(unsigned short port){
     my_addr.sin_port = htons((port));
 }
 
-/* void set_my_addr(int addr){ */
-/*     my_addr.sin_addr.s_addr = ; */
-/* } */
-
-
 void set_my_id(int id){
     my_id = id;
 }
@@ -31,6 +26,12 @@ void set_my_id(int id){
  * @param file Name of the file containing the hosts. Host format must be in A.B.C.D:port
  */
 int init(char *file, char *my_addr, int port){
+    assert(file != NULL);
+    assert(strcmp(file, "") != 0);
+    assert(my_addr != NULL);
+    assert(port != 0);
+    assert(strcmp(my_addr, "") != 0);
+
     int group_count = 0;
     FILE *fd;
     char buf[NODE_COORDINATE_SIZE];
@@ -39,12 +40,6 @@ int init(char *file, char *my_addr, int port){
     int remote_port;
     int node_id;
     char sep = ':';
-
-    assert(file != NULL);
-    assert(strcmp(file, "") != 0);
-    assert(my_addr != NULL);
-    assert(port != 0);
-    assert(strcmp(my_addr, "") != 0);
 
     set_my_port(port);
 
@@ -56,7 +51,8 @@ int init(char *file, char *my_addr, int port){
     pthread_mutex_init(&receive_sockets_mtx, NULL);
     
     fd = fopen(file, "r");
-    
+
+    // Get the size of the group by couting line of the hostfile.
     while(fgets(buf, sizeof(buf), fd) != NULL){
         group_count++;
     }
@@ -80,16 +76,11 @@ int init(char *file, char *my_addr, int port){
         node_id = atoi( strtok(NULL, &sep) );
         if( remote_port != port || strcmp(addr,my_addr) != 0){
             // Fill the connecting sockets
-            send_sockets.nodes[i] = malloc(sizeof(node_t));
-            send_sockets.nodes[i]->connexion = malloc(sizeof(connexion_t));
-            send_sockets.nodes[i]->connexion->infos.sin_family = AF_INET;
-            send_sockets.nodes[i]->connexion->infos.sin_port = htons(remote_port);
-            send_sockets.nodes[i]->connexion->infos.sin_addr.s_addr = inet_addr(addr);
+            send_sockets.nodes[i] = node_create(NULL);
             send_sockets.nodes[i]->id = node_id;
-            send_sockets.nodes[i]->active = false;
-
+            send_sockets.nodes[i]->connexion = connexion_create(addr,remote_port);
             // Pre-fill the listening sockets
-            receive_sockets.nodes[i] = malloc(sizeof(node_t));
+            receive_sockets.nodes[i] = node_create(NULL);
             receive_sockets.nodes[i]->id = node_id;
             i++;
         }

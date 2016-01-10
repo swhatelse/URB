@@ -195,32 +195,32 @@ void handle_connexion_requests(fd_set active_set){
      // Accept pending connexion
      while(current != NULL){
          if(((connexion_t*)(current->data)) && FD_ISSET(((connexion_t*)(current->data))->fd, &active_set)){
-               /* size = recv(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t), 0); */
-               bool retval = recv_all(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t));
-               if(retval){
-                    DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
-                    /* add_node(((connexion_t*)(current->data)), msg.node_id); */
-                    add_node(connexion_pending_pop(current), msg.node_id);
-                    // If the sending connexion is not establish, establishes it
-                    if(!is_node_active(&send_sockets, msg.node_id)){
-                        node_t* node = get_node_by_id(&send_sockets, msg.node_id);
-                        DEBUG_ERR("Rejoin %d / %d\n", msg.node_id, node->id);
-                        close(node->connexion->fd);
-                        connexion(node->connexion);
-                        node->active = true;
-                    }
-               }
-               else{
-                    // Disconnection
-                   if(((connexion_t*)(current->data))){
-                       DEBUG("[?] Client validation aborted [%s:%d][%d]\n", inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
-                       FD_CLR(((connexion_t*)(current->data))->fd, &reception_fd_set);
-                       close(((connexion_t*)(current->data))->fd);
-                       connexion_pending_remove(current);
-                   }
-               }
-          }
-          current = current->next;
+             /* size = recv(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t), 0); */
+             bool retval = recv_all(((connexion_t*)(current->data))->fd, (void*)&msg, sizeof(message_id_t));
+             if(retval){
+                 DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
+                 /* add_node(((connexion_t*)(current->data)), msg.node_id); */
+                 add_node(connexion_pending_pop(current), msg.node_id);
+                 // If the sending connexion is not establish, establishes it
+                 if(!is_node_active(&send_sockets, msg.node_id)){
+                     node_t* node = get_node_by_id(&send_sockets, msg.node_id);
+                     DEBUG_ERR("Rejoin %d / %d\n", msg.node_id, node->id);
+                     /* close(node->connexion->fd); */
+                     connexion(node->connexion);
+                     node->active = true;
+                 }
+             }
+             else{
+                 // Disconnection
+                 if(((connexion_t*)(current->data))){
+                     DEBUG("[?] Client validation aborted [%s:%d][%d]\n", inet_ntoa(((connexion_t*)(current->data))->infos.sin_addr), ntohs(((connexion_t*)(current->data))->infos.sin_port), ((connexion_t*)(current->data))->fd);
+                     FD_CLR(((connexion_t*)(current->data))->fd, &reception_fd_set);
+                     close(((connexion_t*)(current->data))->fd);
+                     connexion_pending_remove(current);
+                 }
+             }
+         }
+         current = current->next;
      }
 }
 
@@ -239,6 +239,7 @@ void handle_disconnexion(int index){
 void handle_event(fd_set active_set){
     handle_connexion_requests(active_set);
 
+    
     for(int i = 0; i < receive_sockets.count; i++){
         if(receive_sockets.nodes[i] != NULL && receive_sockets.nodes[i]->connexion != NULL){
             if(FD_ISSET(receive_sockets.nodes[i]->connexion->fd, &active_set)){
@@ -277,6 +278,7 @@ void listener_init(){
 
     int optval=1;
     setsockopt(listening_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    fcntl(listening_fd, F_SETFL, O_NONBLOCK);
     
     my_addr.sin_family = AF_INET;
     /* my_addr.sin_port = htons(my_port); */

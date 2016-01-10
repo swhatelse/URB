@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
     init(hostfile, "127.0.0.1", port);
     listener_init();
     pthread_create(&tsid,NULL,&listener_run, NULL);
-    sleep(3);
+    sleep(2);
     pthread_create(&csid,NULL,&message_handler, NULL);
     pthread_join(csid, NULL);
     sleep(2);

@@ -1,4 +1,7 @@
 #include<string.h>
+#include<unistd.h>
+#include<fcntl.h>
+#include<assert.h>
 
 #include"group.h"
 #include"listener.h"
@@ -12,6 +15,8 @@
  *******************************************/
 
 int connexion(connexion_t* cnx){
+    assert(cnx);
+    
     cnx->fd = socket(AF_INET, SOCK_STREAM,0);
     if(cnx->fd == -1){
         perror("Failed to create the socket");
@@ -23,6 +28,8 @@ int connexion(connexion_t* cnx){
         return EXIT_FAILURE;    
     }
 
+    /* fcntl(cnx->fd, F_SETFL, O_NONBLOCK); */
+    
     // TODO send node id
     message_id_t msg;
     msg.type = 'I';
@@ -33,6 +40,7 @@ int connexion(connexion_t* cnx){
     else{
         DEBUG_SEND("Failed to send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
     }
+    
     return EXIT_SUCCESS;
 }
 
@@ -58,26 +66,19 @@ void join(){
     fds = calloc(send_sockets.count, sizeof(int));
 
     for(int i = 0; i < send_sockets.count; i++){
-        /* send_sockets.nodes[i]->connexion->fd = socket(AF_INET, SOCK_STREAM,0); */
-        /* if(send_sockets.nodes[i]->connexion->fd != -1){ */
-        if(connexion(send_sockets.nodes[i]->connexion) != EXIT_FAILURE ){
-            send_sockets.nodes[i]->active = true;
-            DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+        if(!send_sockets.nodes[i]->active){
+            if(connexion(send_sockets.nodes[i]->connexion) != EXIT_FAILURE ){
+                send_sockets.nodes[i]->active = true;
+                DEBUG("Connected to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+            }
+            else{
+                send_sockets.nodes[i]->active = false;
+                DEBUG_ERR("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
+            }
         }
-        else{
-            send_sockets.nodes[i]->active = false;
-            DEBUG_ERR("Failed to connect to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd);
-        }
-        /* } */
-        /* else{ */
-        /*     PRINT("Socket failed"); */
-        /* } */
     }
-    
-    // Debug
-    //dump_group_fd(send_sockets);
 }
-
+    
 /** Add a node to the receiving list
  * @param fd File descriptor associated to the addr
  * @param addr Address information of the incomming connexion

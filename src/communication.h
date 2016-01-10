@@ -51,4 +51,6 @@ void multicast(const message_t* msg, size_t size);
 int beb(const void* content, size_t size);
 int urb(const message_t message);
 bool recv_all(int socket, void* buf, size_t length);
+
+bool is_replicated(message_element_t* msg);
 #endif

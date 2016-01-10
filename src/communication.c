@@ -54,8 +54,6 @@ void multicast(const message_t* msg, size_t size){
     for(int i = 0; i < send_sockets.count; i++){
         if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){
             /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd); */
-            //TODO ensure that all have been sent
-            /* retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, size,0); */
             retval = send_all(send_sockets.nodes[i]->connexion->fd, (void*) msg, size);
         }
     }
@@ -78,15 +76,6 @@ int beb(const void* content, size_t size){
     // Send to my self
     insert_message(msg, &already_received);
     
-    /* for(int i = 0; i < send_sockets.count; i++){ */
-    /*     if(send_sockets.nodes[i]->connexion->fd != -1 && send_sockets.nodes[i]->active){ */
-    /*         DEBUG("Sending to [%s:%d][%d]\n", inet_ntoa(send_sockets.nodes[i]->connexion->infos.sin_addr), ntohs(send_sockets.nodes[i]->connexion->infos.sin_port), send_sockets.nodes[i]->connexion->fd); */
-    /*         //TODO ensure that all have been sent */
-    /*         retval = send(send_sockets.nodes[i]->connexion->fd, (void*) msg, sizeof(message_t),0); */
-    /*         sleep(5); */
-    /*     } */
-    /* } */
-
     multicast(msg, sizeof(message_t));
     DEBUG_SEND("[%d][%d] Broadcasted\n", msg->node_id, msg->id);
     return 0;

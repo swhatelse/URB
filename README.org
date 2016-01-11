@@ -1,0 +1,4 @@
+* Installation
+  #+begin_src sh :session foo :results output :exports both 
+  . ./install.sh
+  #+end_src

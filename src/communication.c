@@ -167,12 +167,18 @@ bool is_replicated(message_element_t* element){
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init (&iter, group);
+    g_hash_table_iter_init (&iter, element->acks);
     while (g_hash_table_iter_next (&iter, &key, &value))
     {
-        node_t* node = (node_t*)value;
-        // TODO manage the ack with an hashtable
+        if(*(int*)key != my_id){
+            node_t* node = (node_t*)g_hash_table_lookup(group, key);
+            bool* ack_val = (bool*) value;
+            if(node->in_connected && !ack_val){
+                return false;
+            }
+        }
     }
+    return true;
 }
 
 /** Add the message msg of the sender sender in the already_received list

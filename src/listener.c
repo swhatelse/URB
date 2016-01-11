@@ -102,7 +102,7 @@ void handle_ack(message_t* ack, node_t* sender){
             message_t* msg = malloc(sizeof(message_t));
             element_msg = malloc(sizeof(message_element_t));
             element_list = malloc(sizeof(dlk_element_t));
-            initialize_acks(&element_msg->acks);
+            element_msg->acks = acks_create();
             
             msg->node_id = ack->node_id;
             msg->id = ack->id;
@@ -112,11 +112,11 @@ void handle_ack(message_t* ack, node_t* sender){
             dlk_list_append(&not_received_yet, element_list);
         }
         element_msg = (message_element_t*)element_list->data;
-        add_ack(&element_msg, sender->id);    
+        add_ack(element_msg, sender->id);    
     }
     else{
         element_msg = (message_element_t*)element_list->data;
-        add_ack(&element_msg, sender->id);
+        add_ack(element_msg, sender->id);
         if(is_replicated(element_msg)){
             DEBUG_VALID("[%d][%d]Delivered\n", ack->id, ack->node_id);
         }
@@ -131,7 +131,7 @@ void handle_normal(message_t* msg, node_t* sender){
         if(element){
             dlk_list_move_element_to(&not_received_yet, &already_received, element);
             message_element_t* msg_elmnt = (message_element_t*)element->data;
-            add_ack(&msg_elmnt, my_id);
+            add_ack(msg_elmnt, my_id);
         }
         else{
             // Completely new message

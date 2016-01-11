@@ -125,22 +125,36 @@ void acknowledge(message_t msg){
 /** Allocates and initialize acks to false
  *
  */
-void initialize_acks(bool** acks){
-    size_t size = g_hash_table_size(group) + 1;
-    
-    *acks = calloc(size, sizeof(bool));
-    for(int i = 0; i < size; i++){
-        (*acks)[i] = false;
+GHashTable* acks_create(){
+    // Initialize my entry
+    GHashTable* acks = g_hash_table_new(g_int_hash, g_int_equal);
+    bool* my_ack = (bool*)malloc(sizeof(bool));
+    *my_ack = false;
+    g_hash_table_insert(acks, &my_id, &my_ack);
+
+    // Initialize the entries of the others
+    GHashTableIter iter;
+    gpointer key, value;
+    g_hash_table_iter_init (&iter, group);
+    while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+        bool* ack_val = (bool*)malloc(sizeof(bool));
+        *ack_val = false;
+        g_hash_table_insert(acks, key, &ack_val);
     }
+    return acks;
 }
 
 /** Tags the nodes from which we have received an ack
  * 
  */
-void add_ack(message_element_t** msg, int node_id){
-    assert((*msg)->acks[node_id - 1] == false);
-    (*msg)->acks[node_id - 1] = true;
-    DEBUG_VALID("[%d][%d] Ack from [%d]\n", (*msg)->msg->node_id, (*msg)->msg->id, node_id);
+void add_ack(message_element_t* msg, int node_id){
+    assert(msg);
+    assert(msg->acks);
+    bool* ack_val = (bool*)g_hash_table_lookup(msg->acks, &node_id);
+    assert(*ack_val == false);
+    *ack_val = true;
+    DEBUG_VALID("[%d][%d] Ack from [%d]\n", msg->msg->node_id, msg->msg->id, node_id);
 }
 
 void is_replicated_foreach(gpointer key, gpointer value, gpointer userdata){
@@ -148,8 +162,17 @@ void is_replicated_foreach(gpointer key, gpointer value, gpointer userdata){
 }
 
 bool is_replicated(message_element_t* element){
-    g_hash_table_foreach(group, (GHFunc)is_replicated, NULL);    
-    return false;
+    /* g_hash_table_foreach(group, (GHFunc)is_replicated, NULL);     */
+    /* return false; */
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init (&iter, group);
+    while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+        node_t* node = (node_t*)value;
+        // TODO manage the ack with an hashtable
+    }
 }
 
 /** Add the message msg of the sender sender in the already_received list
@@ -159,15 +182,15 @@ void insert_message(message_t* msg, dlk_list_t* list){
     dlk_element_t* element = malloc(sizeof(dlk_element_t));
     message_element_t* msg_elmnt = malloc(sizeof(message_element_t));
     msg_elmnt->msg = msg;
-    element->data = (void*)msg_elmnt;
-    
-    initialize_acks(&msg_elmnt->acks);
+    msg_elmnt->acks = NULL;
+    msg_elmnt->acks = acks_create();
 
+    element->data = (void*)msg_elmnt;
     dlk_list_append(&already_received, element);
     
     // The message is taken it count as in ack of itself.
     // This way the sender doesn't need to ack its message.
-    add_ack(&msg_elmnt, msg->node_id);    
+    add_ack(msg_elmnt, msg->node_id);    
 }
 
 /** Remove the message from the already_received list and free the memory

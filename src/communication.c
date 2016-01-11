@@ -194,7 +194,7 @@ bool is_replicated(message_element_t* element){
         if(*(int*)key != my_id){
             node_t* node = (node_t*)g_hash_table_lookup(group, key);
             bool* ack_val = (bool*) value;
-            if(node->in_connected && !ack_val){
+            if(node->in_connected && !(*ack_val)){
                 return false;
             }
         }

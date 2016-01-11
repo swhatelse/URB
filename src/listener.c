@@ -115,7 +115,7 @@ void handle_ack(message_t* ack, node_t* sender){
         element_msg = (message_element_t*)element_list->data;
         add_ack(element_msg, &sender->id);
         if(is_replicated(element_msg)){
-            DEBUG_VALID("[%d][%d]Delivered\n", ack->id, ack->node_id);
+            DEBUG_VALID("[%d][%d]Delivered\n", ack->node_id, ack->id);
         }
     }
 }

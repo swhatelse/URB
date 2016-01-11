@@ -87,6 +87,17 @@ int beb(const void* content, size_t size){
     return 0;
 }
 
+gint compare_msg(gconstpointer a, gconstpointer b){
+    message_t* m1 = (message_t*) a;
+    message_element_t* m2 = (message_element_t*) b;
+    if(m1->node_id == m2->msg->node_id && m1->id == m2->msg->id){
+        return 0;
+    }
+    else{
+        return 1;
+    }
+}
+
 /** Check if the message is already in the list
  * @param msg The message to check
  * @param sender The sender of the message
@@ -94,22 +105,14 @@ int beb(const void* content, size_t size){
  * @return true or false
  */
 // TODO modify it to return the msg or null
-bool is_already_in(const int msg_id, const int node_id, dlk_list_t* list){
-    dlk_element_t* current = list->tail;
-
-    // The list is empty.
-    if(!current){
+bool is_already_in(GList* list, message_t* msg){
+    /* if(g_list_find_custom(list,(GCompareFunc)compare_msg, (gpointer)msg)){ */
+    if(get_msg_from_list(list,msg)){
+        return true;
+    }
+    else{
         return false;
     }
-    
-    while(current != NULL){
-        if(node_id == ((message_element_t*)current->data)->msg->node_id && msg_id == ((message_element_t*)current->data)->msg->id){
-              return true;
-         }
-        current = current->next;
-    }
-    
-    return false;
 }
 
 void acknowledge(message_t msg){
@@ -127,10 +130,23 @@ void acknowledge(message_t msg){
  */
 GHashTable* acks_create(){
     // Initialize my entry
-    GHashTable* acks = g_hash_table_new(g_int_hash, g_int_equal);
-    bool* my_ack = (bool*)malloc(sizeof(bool));
+    GHashTable* acks = NULL;
+    acks = g_hash_table_new(g_int_hash, g_int_equal);
+    /* acks = g_hash_table_new(g_direct_hash, g_direct_equal); */
+
+    if(!acks){
+        perror("Failed to create the ack hash table");
+        exit(EXIT_FAILURE);
+    }
+    
+    bool* my_ack = NULL;
+    my_ack = (bool*) malloc(sizeof(bool));
     *my_ack = false;
-    g_hash_table_insert(acks, &my_id, &my_ack);
+
+    if(!g_hash_table_insert(acks, &my_id, my_ack)){
+        perror("Failed to create entry in the ack hash table");
+        exit(EXIT_FAILURE);
+    }
 
     // Initialize the entries of the others
     GHashTableIter iter;
@@ -138,9 +154,14 @@ GHashTable* acks_create(){
     g_hash_table_iter_init (&iter, group);
     while (g_hash_table_iter_next (&iter, &key, &value))
     {
+        int* my_key = (int*) key;
         bool* ack_val = (bool*)malloc(sizeof(bool));
         *ack_val = false;
-        g_hash_table_insert(acks, key, &ack_val);
+        if(!g_hash_table_insert(acks, my_key, ack_val)){
+            fprintf(stderr,"Failed to create entry %d in the ack hash table\n", *my_key);
+            perror("Failed to create other entries in the ack hash table");
+            exit(EXIT_FAILURE);
+        }
     }
     return acks;
 }
@@ -148,13 +169,13 @@ GHashTable* acks_create(){
 /** Tags the nodes from which we have received an ack
  * 
  */
-void add_ack(message_element_t* msg, int node_id){
+void add_ack(message_element_t* msg, int* node_id){
     assert(msg);
     assert(msg->acks);
-    bool* ack_val = (bool*)g_hash_table_lookup(msg->acks, &node_id);
+    bool* ack_val = (bool*)g_hash_table_lookup(msg->acks, node_id);
     assert(*ack_val == false);
     *ack_val = true;
-    DEBUG_VALID("[%d][%d] Ack from [%d]\n", msg->msg->node_id, msg->msg->id, node_id);
+    DEBUG_VALID("[%d][%d] Ack from [%d]\n", msg->msg->node_id, msg->msg->id, *node_id);
 }
 
 void is_replicated_foreach(gpointer key, gpointer value, gpointer userdata){
@@ -184,19 +205,17 @@ bool is_replicated(message_element_t* element){
 /** Add the message msg of the sender sender in the already_received list
  *
  */
-void insert_message(message_t* msg, dlk_list_t* list){
-    dlk_element_t* element = malloc(sizeof(dlk_element_t));
+void insert_message(message_t* msg, GList** list){
     message_element_t* msg_elmnt = malloc(sizeof(message_element_t));
     msg_elmnt->msg = msg;
     msg_elmnt->acks = NULL;
     msg_elmnt->acks = acks_create();
 
-    element->data = (void*)msg_elmnt;
-    dlk_list_append(&already_received, element);
+    *list = g_list_append(*list, msg_elmnt);
     
     // The message is taken it count as in ack of itself.
     // This way the sender doesn't need to ack its message.
-    add_ack(msg_elmnt, msg->node_id);    
+    add_ack(msg_elmnt, &msg->node_id);    
 }
 
 /** Remove the message from the already_received list and free the memory
@@ -224,13 +243,14 @@ bool remove_message(dlk_list_t* list, const int id, const int node_id){
 /** Get the message by using its node_id and msg_id.
  * @return The message or NULL if not in the list.
  */
-dlk_element_t* get_msg_from_list(dlk_list_t* list, const int node_id, const int msg_id){
-    dlk_element_t* current = list->tail;
-    while(current != NULL){
-        if(((message_element_t*)current->data)->msg->id != msg_id && ((message_element_t*)current->data)->msg->node_id != node_id){
+GList* get_msg_from_list(GList* list, message_t* msg){
+    /* return g_list_find_custom(list,(GCompareFunc)compare_msg, (gpointer)msg); */
+    
+    for(GList* current = list; current != NULL; current = current->next){
+        message_element_t* element = (message_element_t*)current->data;
+        if(element->msg->node_id == msg->node_id && element->msg->id == msg->id){
             return current;
         }
-        current = current->next;
     }
     return NULL;
 }

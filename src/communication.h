@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdbool.h>
+#include<glib.h>
 
 #include"common.h"
 #include"list.h"
@@ -35,18 +36,18 @@ typedef struct message_element_t{
 }message_element_t;
 
 // Global vars
-dlk_list_t already_received;
-dlk_list_t not_received_yet;
+GList* already_received;
+GList* not_received_yet;
 
 // Functions
-void insert_message(message_t* msg, dlk_list_t* list);
+void insert_message(message_t* msg, GList** list);
 bool remove_message(dlk_list_t* list, const int id, const int node_id);
-dlk_element_t* get_msg_from_list(dlk_list_t* list, const int node_id, const int msg_id);
-bool is_already_in(const int msg_id, const int node_id, dlk_list_t* list);
+GList* get_msg_from_list(GList* list, message_t* msg);
+bool is_already_in(GList* list, message_t* msg);
 
 GHashTable* acks_create();
 void acknowledge(message_t msg);
-void add_ack(message_element_t* msg, int node_id);
+void add_ack(message_element_t* msg, int* node_id);
 
 void multicast(message_t* msg, size_t size);
 int beb(const void* content, size_t size);

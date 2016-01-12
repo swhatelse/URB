@@ -52,6 +52,10 @@ node_t* get_node_by_id(int node_id){
 
 void foreach_connect(gpointer key, gpointer value, gpointer userdata){
     node_t *node = (node_t*) value;
+    if(pthread_mutex_lock(&node->mtx) != 0){
+        perror("Failed to lock the node in foreach connect");
+        exit(EXIT_FAILURE);
+    }
     if(!node->out_connected){
         if(connexion(node->outbox) == EXIT_SUCCESS){
             node->out_connected = true;
@@ -61,6 +65,10 @@ void foreach_connect(gpointer key, gpointer value, gpointer userdata){
             node->out_connected = false;
             DEBUG_ERR("Failed to connect to [%s:%d][%d]\n", inet_ntoa(node->outbox->infos.sin_addr), ntohs(node->outbox->infos.sin_port), node->outbox->fd);
         }
+    }
+    if(pthread_mutex_unlock(&node->mtx) != 0){
+        perror("Failed to unlock the node in foreach connect");
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -83,13 +91,23 @@ void join(){
 int add_node(connexion_t* cnx, const int node_id){
     assert(cnx);
     assert(cnx->fd > 2); // To be sure the fd is valid
-    
+
     node_t* node = g_hash_table_lookup(group, &node_id);
     if(node){
+        if(pthread_mutex_lock(&node->mtx) != 0){
+            perror("Failed to lock node when adding node");
+            exit(EXIT_FAILURE);
+        }
+        
         node->inbox = cnx;
         node->in_connected = true;
         node->alive = true;
         node_update_time(&node->time);
+        
+        if(pthread_mutex_unlock(&node->mtx) != 0){
+            perror("Failed to unlock node when adding node");
+            exit(EXIT_FAILURE);
+        }
         return EXIT_SUCCESS;
     }
     else{

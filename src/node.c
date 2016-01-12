@@ -38,6 +38,7 @@ node_t* node_create(connexion_t* cnx){
     node->id = -1;
     node->alive = true;
     node->time = (struct timeval){0};
+    pthread_mutex_init(&node->mtx, NULL);
     return node;
 }
 

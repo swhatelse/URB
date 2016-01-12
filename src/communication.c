@@ -53,10 +53,12 @@ void multicast_foreach(gpointer key, gpointer value, gpointer userdata){
     int retval;
     node_t* node = (node_t*) value;
     message_t* msg = (message_t*) userdata;
+    assert(node);
+
     if(node->outbox->fd != -1 && node->out_connected){
         /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(node->connexion->infos.sin_addr), ntohs(node->connexion->infos.sin_port), node->connexion->fd); */
         retval = send_all(node->outbox->fd, (void*) msg, msg->size);
-    }
+    }    
 }
 
 void multicast(message_t* msg, size_t size){
@@ -193,10 +195,24 @@ bool is_replicated(message_element_t* element){
     {
         if(*(int*)key != my_id){
             node_t* node = (node_t*)g_hash_table_lookup(group, key);
+            if(pthread_mutex_lock(&node->mtx) != 0){
+                perror("Failed to lock the node when checking if replicated");
+                exit(EXIT_FAILURE);
+            }
+            
             bool* ack_val = (bool*) value;
             /* if(node->in_connected && !(*ack_val)){ */
             if(node->alive && !(*ack_val)){
+                if(pthread_mutex_unlock(&node->mtx) != 0){
+                    perror("Failed to unlock the node when checking if replicated");
+                    exit(EXIT_FAILURE);
+                }
                 return false;
+            }
+
+            if(pthread_mutex_unlock(&node->mtx) != 0){
+                perror("Failed to unlock the node when checking if replicated");
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -246,8 +262,8 @@ bool remove_message(dlk_list_t* list, const int id, const int node_id){
  */
 GList* get_msg_from_list(GList* list, message_t* msg){
     /* return g_list_find_custom(list,(GCompareFunc)compare_msg, (gpointer)msg); */
-    
-    for(GList* current = list; current != NULL; current = current->next){
+   GList* current; 
+    for(current = list; current != NULL; current = current->next){
         message_element_t* element = (message_element_t*)current->data;
         if(element->msg->node_id == msg->node_id && element->msg->id == msg->id){
             return current;

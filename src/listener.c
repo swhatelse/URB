@@ -307,7 +307,7 @@ void* listener_run(){
 
     DEBUG("Start to listen\n");
     DEBUG("=============================================\n");
-    while(1){
+    while(!terminate){
         // Timeout needs to be reset each time
         timeout.tv_sec = 2;
         timeout.tv_usec = 0;

@@ -22,7 +22,6 @@
 
 // Globals
 int             listening_fd;       // listening socket for connexion
-group_t         reception_sockets;  // Use for incomming messages
 fd_set          reception_fd_set;   // File descriptor to watch
 
 // Functions

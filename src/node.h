@@ -4,6 +4,7 @@
 #include<stdbool.h>
 #include<netinet/in.h>
 #include<sys/time.h>
+#include<pthread.h>
 
 // Types
 typedef struct connexion_t{
@@ -19,7 +20,8 @@ typedef struct node_t{
     bool in_connected;  // True when inbox established
     bool out_connected; // True when outbox established
     bool alive;
-    struct timeval time;
+    struct timeval time; // Use for the heartbeat checking
+    pthread_mutex_t mtx;
 }node_t;
 
 // Globals

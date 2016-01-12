@@ -100,6 +100,8 @@ int init(char *file, char *my_addr, int port){
     }
 
     fclose(fd);
-
+    
+    listener_init();
+    
     return EXIT_SUCCESS;
 }

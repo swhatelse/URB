@@ -1,3 +1,6 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 #include<stdio.h>
 #include <string.h>
 #include<stdlib.h>
@@ -10,9 +13,7 @@
 
 #include"node.h"
 #include"group.h"
-
-#ifndef COMMON_H
-#define COMMON_H
+#include"listener.h"
 
 /******************************************
  *

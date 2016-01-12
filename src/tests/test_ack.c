@@ -7,8 +7,8 @@
 
 void create_group(){
     group = g_hash_table_new(g_int_hash, g_int_equal);
-    
-    for(int i = 0; i < GROUP_SIZE ; i++){
+   int i; 
+    for(i = 0; i < GROUP_SIZE ; i++){
         node_t* peer = node_create(NULL);
         peer->id = i;
         if(!g_hash_table_insert(group, &peer->id, peer)){
@@ -21,8 +21,8 @@ void create_group(){
 bool check_group(){
     if(g_hash_table_size(group) != GROUP_SIZE)
         return false;
-
-    for(int i = 0; i < GROUP_SIZE ; i++){
+    int i;
+    for(i = 0; i < GROUP_SIZE ; i++){
         node_t* peer = g_hash_table_lookup(group, &i);
         if(peer->id != i){
             return false;

@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include"failure_detector.h"
 #include"listener.h"
 #include"group.h"
 #include"common.h"
@@ -17,8 +18,7 @@
 
 int main(int argc, char *argv[]){
     int opt;
-    /* pthread_t tsid, tcid; */
-    pthread_t tsid, csid;
+    pthread_t tsid, tcid, tfid;
     char* hostfile = NULL;
     int port = 0;
 
@@ -45,12 +45,16 @@ int main(int argc, char *argv[]){
 
     // TODO: make it proper
     init(hostfile, "127.0.0.1", port);
-    listener_init();
+    
     pthread_create(&tsid,NULL,&listener_run, NULL);
     sleep(2);
-    pthread_create(&csid,NULL,&message_handler, NULL);
-    pthread_join(csid, NULL);
+
+    pthread_create(&tcid,NULL,&message_handler, NULL);
+    pthread_join(tcid, NULL);
+
+    pthread_create(&tfid,NULL,&run_P, NULL);
     sleep(5);
+
     char msg[] = "test";
     
     urb((void*)msg, sizeof(msg));

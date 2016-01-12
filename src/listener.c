@@ -148,12 +148,16 @@ void handle_normal(message_t* msg, node_t* sender){
 }
 
 void handle_message(message_t* msg, node_t* sender){
+    node_update_time(&sender->time);
     switch(msg->type){
     case 'M':
          handle_normal(msg, sender);
         break;
     case 'A':
         handle_ack((message_t*)msg, sender);
+        break;
+    case 'H':
+        // Received heartbeat
         break;
     default:
         PRINT("Unknown type");
@@ -198,6 +202,7 @@ void handle_connexion_requests(fd_set active_set){
              // Remove it from pending connexion and register it using its id.
              if(retval){
                  DEBUG("[%d] Client validation validated [%s:%d][%d]\n", msg.node_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
+                 // Register the node in the incomming connexion
                  add_node(cnx, msg.node_id);
                  connexions_pending = g_list_remove(connexions_pending, cnx);
                  // If the sending connexion is not establish, establishes it

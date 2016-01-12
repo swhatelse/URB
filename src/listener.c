@@ -115,7 +115,7 @@ void handle_ack(message_t* ack, node_t* sender){
         element_msg = (message_element_t*)element_list->data;
         add_ack(element_msg, &sender->id);
         if(is_replicated(element_msg)){
-            DEBUG_VALID("[%d][%d]Delivered\n", ack->node_id, ack->id);
+            deliver(element_msg);
         }
     }
 }
@@ -231,8 +231,6 @@ void handle_disconnexion(int index){
         close(node->inbox->fd);
         free(node->inbox);
         node->inbox = NULL;
-        // Not sure it is need
-        /* remove_node(node); */
     }
 }
 
@@ -264,14 +262,10 @@ void handle_event(fd_set active_set){
  *
  */
 void listener_init(){
-    // TODO here just for the moment
-    /* dlk_list_init(&already_received); */
-    /* dlk_list_init(&connexions_pending); */
-    /* dlk_list_init(&not_received_yet); */
-    
     connexions_pending = NULL;
     already_received = NULL;
     not_received_yet = NULL;
+    delivered = NULL;
     
     PRINT("Initialization of the listener");
     

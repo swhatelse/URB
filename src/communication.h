@@ -38,6 +38,7 @@ typedef struct message_element_t{
 // Global vars
 GList* already_received;
 GList* not_received_yet;
+GList* delivered;
 
 // Functions
 void insert_message(message_t* msg, GList** list);
@@ -50,10 +51,9 @@ void acknowledge(message_t msg);
 void add_ack(message_element_t* msg, int* node_id);
 
 void multicast(message_t* msg, size_t size);
-int beb(const void* content, size_t size);
-int urb(const message_t message);
+int urb(const void* content, size_t size);
 bool recv_all(int socket, void* buf, size_t length);
 
-void deliver(const message_t message);
+void deliver(message_element_t* message);
 bool is_replicated(message_element_t* msg);
 #endif

@@ -1,12 +1,12 @@
+#ifndef FAILURE_DETECTOR_H
+#define FAILURE_DETECTOR_H
+
 #include<stdio.h>
 
 #include"common.h"
 
-#ifndef FAILURE_DETECTOR
-#define FAILURE_DETECTOR
-
 void init();
 int check();
-void* run();
+void* run(void);
 
 #endif

@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
     sleep(5);
     char msg[] = "test";
     
-    beb((void*)msg, sizeof(msg));
+    urb((void*)msg, sizeof(msg));
     
     pthread_join(tsid, NULL);
 

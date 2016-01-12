@@ -41,6 +41,7 @@ int init(char *file, char *my_addr, int port){
     int node_id;
     char sep = ':';
 
+    terminate = false;
     set_my_port(port);
 
     DEBUG("Begin of initialization\n");

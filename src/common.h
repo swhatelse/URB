@@ -71,7 +71,7 @@
  *
  *****************************************/
 
-int running;
+bool terminate;
 int my_port;
 struct sockaddr_in my_addr;
 

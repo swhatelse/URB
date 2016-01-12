@@ -88,10 +88,13 @@ int add_node(connexion_t* cnx, const int node_id){
     if(node){
         node->inbox = cnx;
         node->in_connected = true;
+        node->alive = true;
+        node_update_time(&node->time);
         return EXIT_SUCCESS;
     }
     else{
         node->in_connected = false;
+        node->alive = false;
         return EXIT_FAILURE;
     }
 }

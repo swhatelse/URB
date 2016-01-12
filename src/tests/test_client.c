@@ -37,7 +37,7 @@ int main(int argc, char** argv){
 
     char msg[] = "test";
     
-    beb((void*)msg, sizeof(msg));
+    urb((void*)msg, sizeof(msg));
 
     return EXIT_SUCCESS;
 }

@@ -36,7 +36,8 @@ node_t* node_create(connexion_t* cnx){
     node->in_connected = false;
     node->out_connected = false;
     node->id = -1;
-
+    node->alive = true;
+    node->time = (struct timeval){0};
     return node;
 }
 
@@ -49,3 +50,6 @@ bool is_the_same_node(const node_t node1, const node_t node2){
     }
 }
 
+void node_update_time(struct timeval *tv){
+    gettimeofday(tv, NULL);
+}

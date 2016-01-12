@@ -1,8 +1,9 @@
-#include<stdbool.h>
-#include <netinet/in.h>
-
 #ifndef NODE_H
 #define NODE_H
+
+#include<stdbool.h>
+#include<netinet/in.h>
+#include<sys/time.h>
 
 // Types
 typedef struct connexion_t{
@@ -17,6 +18,8 @@ typedef struct node_t{
     int id;
     bool in_connected;  // True when inbox established
     bool out_connected; // True when outbox established
+    bool alive;
+    struct timeval time;
 }node_t;
 
 // Globals
@@ -27,6 +30,7 @@ int get_node_port(node_t* node);
 int get_node_addr(node_t* node);
 int get_node_fd(node_t* node);
 
+void node_update_time(struct timeval *tv);
 node_t* node_create(connexion_t* cnx);
 connexion_t* connexion_create(char* addr, int port);
 bool is_the_same_node(const node_t node1, const node_t node2);

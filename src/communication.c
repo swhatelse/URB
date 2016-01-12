@@ -69,15 +69,15 @@ void multicast(message_t* msg, size_t size){
  *  @return Number of node to which the message
  *          has been sent.
  */
-int beb(const void* content, size_t size){
+int urb(const void* content, size_t size){
     int retval;
 
     message_t* msg = malloc(sizeof(message_t));
     msg->type = 'M';
     msg->content = NULL;
     msg->node_id = my_id;
-    /* msg.id = generate_msg_id(); */
-    msg->id = 1;
+    msg->id = generate_msg_id();
+    /* msg->id = 1; */
 
     // Send to my self
     insert_message(msg, &already_received);
@@ -194,7 +194,8 @@ bool is_replicated(message_element_t* element){
         if(*(int*)key != my_id){
             node_t* node = (node_t*)g_hash_table_lookup(group, key);
             bool* ack_val = (bool*) value;
-            if(node->in_connected && !(*ack_val)){
+            /* if(node->in_connected && !(*ack_val)){ */
+            if(node->alive && !(*ack_val)){
                 return false;
             }
         }
@@ -255,3 +256,11 @@ GList* get_msg_from_list(GList* list, message_t* msg){
     return NULL;
 }
 
+void deliver(message_element_t* message){
+    assert(message);
+    assert(message->msg);
+    /* already_received = g_list_remove(already_received, message); */
+    delivered = g_list_append(delivered, message->msg);
+    DEBUG_VALID("[%d][%d]Delivered\n", message->msg->node_id, message->msg->id);
+    /* free(message); */
+}

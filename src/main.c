@@ -10,7 +10,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include"failure_detector.h"
 #include"listener.h"
 #include"group.h"
 #include"common.h"
@@ -38,7 +37,7 @@ void* interpreter(){
 
 int main(int argc, char *argv[]){
     int opt;
-    pthread_t tsid, tcid, tfid, tiid;
+    pthread_t tsid, tcid, tiid;
     char* hostfile = NULL;
     int port = 0;
 

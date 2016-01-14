@@ -220,28 +220,6 @@ void insert_message(message_t* msg, GList** list){
     add_ack(msg_elmnt, &msg->node_id);    
 }
 
-/** Remove the message from the already_received list and free the memory
- * @param id Message identifier
- * @return true if the message has been removed otherwise false
- */
-bool remove_message(dlk_list_t* list, const int id, const int node_id){
-    dlk_element_t* current = list->tail;
-    bool found = false;
-
-    while(current != NULL || !found){
-        if(((message_element_t*)current->data)->msg->id == id && ((message_element_t*)current->data)->msg->node_id == node_id){
-            dlk_list_remove(list, current);
-            free(current);
-            found = true;
-        }
-        else{
-            current = current->next;
-        }
-    }
-    
-    return found;
-}
-
 /** Get the message by using its node_id and msg_id.
  * @return The message or NULL if not in the list.
  */

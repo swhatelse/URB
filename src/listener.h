@@ -8,8 +8,6 @@
 #include"common.h"
 #include"group.h"
 #include"node.h"
-#include"list.h"
-#include"failure_detector.h"
 
 #ifndef LISTENER_H
 #define LISTENER_H

@@ -311,7 +311,7 @@ void* listener_run(){
     while(!terminate){
         // Timeout needs to be reset each time
         timeout.tv_sec = 0;
-        timeout.tv_usec = WAKE_TIME / 10;
+        timeout.tv_usec = 150000;
 
         fd_set active_set;
         active_set = reception_fd_set;
@@ -324,6 +324,7 @@ void* listener_run(){
             handle_event(active_set);
         }
         else{
+            
         }
     }
     return NULL;

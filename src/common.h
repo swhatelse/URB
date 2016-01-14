@@ -14,6 +14,7 @@
 #include"node.h"
 #include"group.h"
 #include"listener.h"
+#include"communication.h"
 
 /******************************************
  *
@@ -92,4 +93,6 @@ int get_my_id();
 void set_my_port(unsigned short port);
 void set_my_addr(char* addr);
 void set_my_id(int id);
+
+void program_halt();
 #endif

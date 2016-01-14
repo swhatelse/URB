@@ -55,10 +55,12 @@ void multicast_foreach(gpointer key, gpointer value, gpointer userdata){
     message_t* msg = (message_t*) userdata;
     assert(node);
 
-    if(node->outbox->fd != -1 && node->out_connected){
-        /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(node->outbox->infos.sin_addr), ntohs(node->outbox->infos.sin_port), node->outbox->fd); */
-        retval = send_all(node->outbox->fd, (void*) msg, msg->size);
-    }    
+    if(node->outbox){
+        if(node->outbox->fd != -1 && node->out_connected){
+            /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(node->outbox->infos.sin_addr), ntohs(node->outbox->infos.sin_port), node->outbox->fd); */
+            retval = send_all(node->outbox->fd, (void*) msg, msg->size);
+        }
+    }
 }
 
 void multicast(message_t* msg, size_t size){
@@ -79,7 +81,6 @@ int urb(const void* content, size_t size){
     msg->content = NULL;
     msg->node_id = my_id;
     msg->id = generate_msg_id();
-    /* msg->id = 1; */
 
     // Send to my self
     insert_message(msg, &already_received);
@@ -108,7 +109,6 @@ gint compare_msg(gconstpointer a, gconstpointer b){
  */
 // TODO modify it to return the msg or null
 bool is_already_in(GList* list, message_t* msg){
-    /* if(g_list_find_custom(list,(GCompareFunc)compare_msg, (gpointer)msg)){ */
     if(get_msg_from_list(list,msg)){
         return true;
     }
@@ -185,38 +185,23 @@ void is_replicated_foreach(gpointer key, gpointer value, gpointer userdata){
 }
 
 bool is_replicated(message_element_t* element){
-    /* g_hash_table_foreach(group, (GHFunc)is_replicated, NULL);     */
-    /* return false; */
     GHashTableIter iter;
     gpointer key, value;
 
+    // As there no failure detector we count the majority
     g_hash_table_iter_init (&iter, element->acks);
+    // counting acks
+    int nb_acks = 0;
     while (g_hash_table_iter_next (&iter, &key, &value))
     {
-        if(*(int*)key != my_id){
-            node_t* node = (node_t*)g_hash_table_lookup(group, key);
-            if(pthread_mutex_lock(&node->mtx) != 0){
-                perror("Failed to lock the node when checking if replicated");
-                exit(EXIT_FAILURE);
-            }
-            
-            bool* ack_val = (bool*) value;
-            /* if(node->in_connected && !(*ack_val)){ */
-            if(node->alive && !(*ack_val)){
-                if(pthread_mutex_unlock(&node->mtx) != 0){
-                    perror("Failed to unlock the node when checking if replicated");
-                    exit(EXIT_FAILURE);
-                }
-                return false;
-            }
-
-            if(pthread_mutex_unlock(&node->mtx) != 0){
-                perror("Failed to unlock the node when checking if replicated");
-                exit(EXIT_FAILURE);
-            }
+        bool* ack_val = (bool*) value;
+        if(*ack_val){
+            nb_acks++;
         }
     }
-    return true;
+
+    int group_size = g_hash_table_size(element->acks);
+    return nb_acks >= (group_size / 2) + 1;
 }
 
 /** Add the message msg of the sender sender in the already_received list
@@ -285,8 +270,7 @@ bool is_already_delivered(GList* list, message_t* msg){
 void deliver(message_element_t* message){
     assert(message);
     assert(message->msg);
-    /* already_received = g_list_remove(already_received, message); */
-    delivered = g_list_append(delivered, message->msg);
+    delivered = g_list_append(delivered, message);
+    already_received = g_list_remove(already_received, message);
     DEBUG_VALID("[%d][%d]Delivered\n", message->msg->node_id, message->msg->id);
-    /* free(message); */
 }

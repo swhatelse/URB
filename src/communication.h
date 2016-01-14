@@ -24,12 +24,6 @@ typedef struct message_id_t{
     int node_id;
 }message_id_t;
 
-typedef struct message_ack_t{
-    char type;
-    int message_id;
-    int node_id;
-}message_ack_t;
-
 typedef struct message_element_t{
     message_t* msg;
     GHashTable* acks;

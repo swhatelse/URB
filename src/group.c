@@ -28,12 +28,18 @@ int connexion(connexion_t* cnx){
         return EXIT_FAILURE;    
     }
 
-    // TODO send node id
+    int set = 1;
+    
     message_id_t msg;
     msg.type = 'I';
     msg.node_id = my_id;
     if( send(cnx->fd, &msg, sizeof(msg), 0) > 0){
         DEBUG_SEND("Send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
+        message_t heartbeat;
+        heartbeat.type = 'H';
+        heartbeat.node_id = my_id;
+        heartbeat.id = -1;
+        multicast(&heartbeat, sizeof(message_t));
     }
     else{
         DEBUG_SEND("Failed to send id %d to [%s:%d][%d]\n", my_id, inet_ntoa(cnx->infos.sin_addr), ntohs(cnx->infos.sin_port), cnx->fd);
@@ -117,9 +123,8 @@ int add_node(connexion_t* cnx, const int node_id){
     }
 }
 
-// TODO is it useful?
 void remove_node(node_t* node){
-    /* free(node); */
+    free(node);
 }
 
 void* message_handler(){
@@ -128,8 +133,3 @@ void* message_handler(){
     return NULL;
 }
 
-void dump_group_fd(group_t group){
-    /* for(int i = 0; i < group.count; i++){ */
-    /*     DEBUG("Send sockets [%s:%d][%d]\n", inet_ntoa(group.nodes[i]->connexion->infos.sin_addr), ntohs(get_node_port(group.nodes[i])), get_node_fd(group.nodes[i])); */
-    /* } */
-}

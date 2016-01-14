@@ -16,9 +16,29 @@
 #include"common.h"
 #include"communication.h"
 
+void* interpreter(){
+    char msg[] = "test";
+
+    printf("Type 's' to send a message 'h' to halt\n");
+    char cmd;
+    while(!terminate){
+        cmd = getc(stdin);
+        switch(cmd){
+        case 's':
+            urb((void*)msg, sizeof(msg));
+            break;
+        case 'h':
+            terminate = true;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 int main(int argc, char *argv[]){
     int opt;
-    pthread_t tsid, tcid, tfid;
+    pthread_t tsid, tcid, tfid, tiid;
     char* hostfile = NULL;
     int port = 0;
 
@@ -29,14 +49,17 @@ int main(int argc, char *argv[]){
 
     while( (opt = getopt(argc, argv, "hp:f:") ) != -1){
         switch(opt){
-		case 'h':
-		  fprintf(stderr,"Usage: ./main -f [hostfile] -p [port]");
+        case 'h':
+            fprintf(stderr,"Usage: ./main -f [hostfile] -p [port]");
             break;
         case 'f':
             hostfile = optarg;
             break;
         case 'p':
             port = atoi(optarg);
+            break;
+        case 't':
+            program_halt();
             break;
         default:
             return EXIT_FAILURE;
@@ -52,12 +75,7 @@ int main(int argc, char *argv[]){
     pthread_create(&tcid,NULL,&message_handler, NULL);
     pthread_join(tcid, NULL);
 
-    pthread_create(&tfid,NULL,&run_P, NULL);
-    sleep(5);
-
-    char msg[] = "test";
-    
-    urb((void*)msg, sizeof(msg));
+    pthread_create(&tiid,NULL,&interpreter, NULL);
     
     pthread_join(tsid, NULL);
 

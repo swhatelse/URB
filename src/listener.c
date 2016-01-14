@@ -17,12 +17,6 @@
 
 /********************************************
  *
- *             Global vars
- *
- *******************************************/
-GList* connexions_pending;
-/********************************************
- *
  *             Functions
  *
  *******************************************/
@@ -34,7 +28,6 @@ GList* connexions_pending;
  * @param addr Address informations of the incomming connexion.
  */
 void connexion_pending_add(int fd, struct sockaddr_in addr){
-    /* dlk_element_t* pending = malloc(sizeof(dlk_element_t)); */
     connexion_t* cnx = malloc(sizeof(connexion_t)); 
     cnx->fd = fd;
     cnx->infos = addr;
@@ -85,63 +78,72 @@ void handle_ack(message_t* ack, node_t* sender){
     // First check if we already received the corresponding message.
     // If not create an entry in the already_received list and add the ack.
     // The message will be filled later when received.
-    GList* element_list = get_msg_from_list(already_received, ack);
-    message_element_t* element_msg;
+    GList* element_list = get_msg_from_list(delivered, ack);
     
+    // If already delivered skip it
     if(!element_list){
-        // Received an ack for a message we didn't received yet
-        GList* element_list = get_msg_from_list(not_received_yet, ack);
+        element_list = get_msg_from_list(already_received, ack);
+        message_element_t* element_msg;
         if(!element_list){
-            // Message not received yet and received the first ack for it
-            // Create an empty message to register the ack and register them
-            // for the futur message.
-            message_t* msg = malloc(sizeof(message_t));
-            msg->node_id = ack->node_id;
-            msg->id = ack->id;
-            msg->content = NULL;
-
-            /* element_msg = malloc(sizeof(message_element_t)); */
-            /* element_msg->acks = acks_create();             */
-            insert_message(msg, &not_received_yet);
-            /* add_ack(element_msg, &my_id);     */
-            /* not_received_yet = g_list_append(not_received_yet, element_msg); */
+            // Received an ack for a message we didn't received yet
+            GList* element_list = get_msg_from_list(not_received_yet, ack);
+            if(!element_list){
+                // Message not received yet and received the first ack for it
+                // Create an empty message to register the ack and register them
+                // for the futur message.
+                message_t* msg = malloc(sizeof(message_t));
+                msg->node_id = ack->node_id;
+                msg->id = ack->id;
+                msg->content = NULL;
+                insert_message(msg, &not_received_yet);
+            }
+            else{
+                element_msg = (message_element_t*)element_list->data;
+                add_ack(element_msg, &sender->id);    
+            }
         }
         else{
             element_msg = (message_element_t*)element_list->data;
-            add_ack(element_msg, &sender->id);    
+            add_ack(element_msg, &sender->id);
+            if(is_replicated(element_msg)){
+                deliver(element_msg);
+            }
         }
     }
     else{
-        element_msg = (message_element_t*)element_list->data;
-        add_ack(element_msg, &sender->id);
-        if(is_replicated(element_msg)){
-            deliver(element_msg);
-        }
+        
     }
 }
 
 void handle_normal(message_t* msg, node_t* sender){
-    // Message have not received yet
-    if(!is_already_in(already_received, msg)){
-        GList* element = get_msg_from_list(not_received_yet, msg);
-        // Check is the message is already referenced in the not_received yet
-        if(element){
-            message_element_t* msg_elmnt = (message_element_t*)element->data;
-            not_received_yet = g_list_remove(not_received_yet, msg_elmnt);
-            already_received = g_list_append(already_received, msg_elmnt);
-            add_ack(msg_elmnt, &my_id);
+    if(!is_already_in(delivered, msg)){
+        // Message have not received yet
+        if(!is_already_in(already_received, msg)){
+            GList* element = get_msg_from_list(not_received_yet, msg);
+            // Check is the message is already referenced in the not_received yet
+            if(element){
+                message_element_t* msg_elmnt = (message_element_t*)element->data;
+                not_received_yet = g_list_remove(not_received_yet, msg_elmnt);
+                already_received = g_list_append(already_received, msg_elmnt);
+                add_ack(msg_elmnt, &my_id);
+            }
+            else{
+                // Completely new message
+                insert_message(msg, &already_received);
+            }
+            /* DEBUG_RECV("[%d][%d] Message received from [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(sender->inbox->infos.sin_addr), ntohs(sender->inbox->infos.sin_port), sender->inbox->fd); */
+            DEBUG_RECV("[%d][%d] Message received from [%d]\n", msg->node_id, msg->id, sender->id);
+            acknowledge(*msg);
+            multicast(msg, sizeof(message_t));
+            DEBUG_SEND("[%d][%d] Retransmited\n", msg->node_id, msg->id);
         }
         else{
-            // Completely new message
-            insert_message(msg, &already_received);
+            // Message already received, we can drop it
+            free(msg);
+            msg = NULL;
         }
-        DEBUG_RECV("[%d][%d] Message received from [%s:%d][%d]\n", msg->node_id, msg->id, inet_ntoa(sender->inbox->infos.sin_addr), ntohs(sender->inbox->infos.sin_port), sender->inbox->fd);
-        acknowledge(*msg);
-        multicast(msg, sizeof(message_t));
-        DEBUG_SEND("[%d][%d] Retransmited\n", msg->node_id, msg->id);
     }
     else{
-        // Message already received, we can drop it
         free(msg);
         msg = NULL;
     }
@@ -192,7 +194,6 @@ void handle_connexion_requests(fd_set active_set){
           connexion_accept();
      }
 
-     /////////////////////////////// NEW
      GList* current;
      for(current = connexions_pending; current != NULL; current = current->next){
          connexion_t* cnx = (connexion_t*)current->data;
@@ -221,7 +222,6 @@ void handle_connexion_requests(fd_set active_set){
                      close(cnx->fd);
                      connexion_pending_remove(current);
                      connexions_pending = g_list_remove(connexions_pending, cnx);
-                     /* free(cnx); */
                  }
              }
          }
@@ -234,8 +234,9 @@ void handle_disconnexion(int index){
         DEBUG("[%d] Deconnexion\n", node->id);
         FD_CLR(node->inbox->fd, &reception_fd_set);
         close(node->inbox->fd);
-        free(node->inbox);
         node->inbox = NULL;
+        close(node->outbox->fd);
+        node->outbox = NULL;
     }
 }
 
@@ -309,8 +310,8 @@ void* listener_run(){
     DEBUG("=============================================\n");
     while(!terminate){
         // Timeout needs to be reset each time
-        timeout.tv_sec = 2;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = WAKE_TIME / 10;
 
         fd_set active_set;
         active_set = reception_fd_set;
@@ -323,7 +324,6 @@ void* listener_run(){
             handle_event(active_set);
         }
         else{
-            DEBUG("No Event\n");
         }
     }
     return NULL;

@@ -8,7 +8,7 @@ struct timespec wake_up;
 
 void init_P(){
     wake_up.tv_sec = 0;
-    wake_up.tv_nsec = WAKE_TIME;
+    wake_up.tv_nsec = 1;
 }
 
 void check_node(gpointer key, gpointer value, gpointer userdata){
@@ -21,10 +21,17 @@ void check_node(gpointer key, gpointer value, gpointer userdata){
         exit(EXIT_FAILURE);
     }
 
+    gettimeofday(&time, NULL);
     if(node->alive){
-        gettimeofday(&time, NULL);
-        if( (time.tv_sec - node->time.tv_sec) == 0 && (time.tv_sec - node->time.tv_sec) <= TIME_DEATH ){
+        if( ((time.tv_sec - node->time.tv_sec) > 0) || ((time.tv_sec - node->time.tv_sec) == 0  && (time.tv_usec - node->time.tv_usec) >= TIME_DEATH )){
             node->alive = false;
+            DEBUG_ERR("[Node:%d] Is dead\n", node->id);
+        }
+    }
+    else{
+        if( ((time.tv_sec - node->time.tv_sec) < 0) || ((time.tv_sec - node->time.tv_sec) == 0 && (time.tv_usec - node->time.tv_usec) < TIME_DEATH) ){
+            node->alive = true;
+            DEBUG_ERR("[Node:%d] Is alive\n", node->id);
         }
     }
     
@@ -32,13 +39,19 @@ void check_node(gpointer key, gpointer value, gpointer userdata){
         perror("Cannot free the mutex when checking node");
         exit(EXIT_FAILURE);
     }
+
+    message_t msg;
+    msg.type = 'H';
+    msg.id = -1;
+    msg.node_id = my_id;
+
+    multicast(&msg, sizeof(message_t));
 }
 
 void* run_P(){
     init_P();
     while(!terminate){
         nanosleep(&wake_up, NULL);
-        /* usleep(100000); */
         g_hash_table_foreach(group, (GHFunc)check_node, NULL);
     }
 }

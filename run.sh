@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export $PWD/bin/lib/glib/lib/pkgconfig/
-
 gnome-terminal -e "./bin/main -p 9003 -f host.txt &" 
 gnome-terminal -e "./bin/main -p 9000 -f host.txt &" 
 gnome-terminal -e "./bin/main -p 9001 -f host.txt &" 

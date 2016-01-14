@@ -56,7 +56,7 @@ void multicast_foreach(gpointer key, gpointer value, gpointer userdata){
     assert(node);
 
     if(node->outbox->fd != -1 && node->out_connected){
-        /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(node->connexion->infos.sin_addr), ntohs(node->connexion->infos.sin_port), node->connexion->fd); */
+        /* DEBUG("Sending '%c' [%d][%d] to [%s:%d][%d]\n", msg->type, msg->node_id, msg->id, inet_ntoa(node->outbox->infos.sin_addr), ntohs(node->outbox->infos.sin_port), node->outbox->fd); */
         retval = send_all(node->outbox->fd, (void*) msg, msg->size);
     }    
 }
@@ -261,7 +261,6 @@ bool remove_message(dlk_list_t* list, const int id, const int node_id){
  * @return The message or NULL if not in the list.
  */
 GList* get_msg_from_list(GList* list, message_t* msg){
-    /* return g_list_find_custom(list,(GCompareFunc)compare_msg, (gpointer)msg); */
    GList* current; 
     for(current = list; current != NULL; current = current->next){
         message_element_t* element = (message_element_t*)current->data;
@@ -270,6 +269,17 @@ GList* get_msg_from_list(GList* list, message_t* msg){
         }
     }
     return NULL;
+}
+
+bool is_already_delivered(GList* list, message_t* msg){
+    GList* current; 
+    for(current = list; current != NULL; current = current->next){
+        message_t* element = (message_t*)current->data;
+        if(element->node_id == msg->node_id && element->id == msg->id){
+            return true;
+        }
+    }
+    return false;
 }
 
 void deliver(message_element_t* message){

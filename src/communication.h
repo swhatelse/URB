@@ -45,6 +45,7 @@ void insert_message(message_t* msg, GList** list);
 bool remove_message(dlk_list_t* list, const int id, const int node_id);
 GList* get_msg_from_list(GList* list, message_t* msg);
 bool is_already_in(GList* list, message_t* msg);
+bool is_already_delivered(GList* list, message_t* msg);
 
 GHashTable* acks_create();
 void acknowledge(message_t msg);
